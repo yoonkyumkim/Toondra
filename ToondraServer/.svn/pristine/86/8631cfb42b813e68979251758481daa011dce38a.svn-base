@@ -1,0 +1,91 @@
+package kr.co.toondra.web.content.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.base.controller.BaseController;
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.content.service.ContentService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping(value="/admin/content")
+@Controller
+public class ContentController extends BaseController{
+	
+	@Autowired
+	ContentService service = new ContentService();
+
+	@RequestMapping(value="/contentListView")
+	public String contentListView(HttpServletRequest request,Model model){
+		
+		PMap pMap = new PMap(request);
+		pMap = service.getWork(pMap);
+		model.addAllAttributes(pMap);
+		return "toondra/content/contentList";
+	}
+	
+	@RequestMapping(value="/contentList")
+	public String contentList(HttpServletRequest request, Model model){
+		PMap pMap = new PMap(request);
+		pMap.put("iDisplayStart", pMap.getInt("iDisplayStart"));
+		pMap.put("iDisplayLength", pMap.getInt("iDisplayLength"));
+		model.addAllAttributes(service.contentList(pMap));
+		
+		return JSON_VIEW;
+	}
+	
+	@RequestMapping(value="/insertContentView")
+	public String insertContentView(HttpServletRequest request,Model model) {
+		PMap pMap = new PMap(request);
+		pMap = service.getWorkList(pMap);
+		model.addAllAttributes(pMap);
+		
+		return "toondra/content/contentInsert";
+	}
+	
+	@RequestMapping(value="/insertContent")
+	public String insertContent(HttpServletRequest request, Model model){
+		
+		PMap pMap = new PMap(request);
+		pMap = service.insertContent(pMap);
+		model.addAllAttributes(pMap);
+		
+		return "toondra/content/contentInsert";
+	}
+	
+	@RequestMapping(value="/updateContentService")
+	public String updateContentService(HttpServletRequest request, Model model) throws Exception {
+		service.updateContentService(new PMap(request));
+		model.addAttribute("result", true);
+		
+		return JSON_VIEW;
+	}
+	
+	@RequestMapping(value="/deleteContent")
+	public String deleteContent(HttpServletRequest request, Model model) throws Exception {
+		service.deleteContent(new PMap(request));
+		model.addAttribute("result", true);
+		
+		return JSON_VIEW;
+	}
+	
+	@RequestMapping(value="/contentDetail")
+	public String getContent(HttpServletRequest request, Model model){
+		
+		PMap pMap = new PMap(request);
+		pMap = service.getContent(pMap);
+		model.addAllAttributes(pMap);
+		return "toondra/content/contentDetail";
+	}
+	
+	@RequestMapping(value="/updateContent")
+	public String updateContent(HttpServletRequest request, Model model) {
+		PMap pMap = new PMap(request);
+		pMap = service.updateContent(pMap);
+		model.addAllAttributes(pMap);
+		return "toondra/content/contentDetail";
+	}
+}

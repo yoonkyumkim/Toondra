@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="API.Notice">
+
+  	<sql id="noticeWhere">
+    	WHERE	notice.reg_manager_seq = manager.manager_seq
+    	<if test='last_update_date != null and last_update_date != ""'>
+    	<![CDATA[
+    	AND		(
+    			notice.reg_date > STR_TO_DATE(#{last_update_date}, '%Y-%m-%d %H:%i:%s')
+    			OR
+    			notice.upt_date > STR_TO_DATE(#{last_update_date}, '%Y-%m-%d %H:%i:%s')
+    			)
+		]]>
+    	</if>
+    </sql>
+    
+    <select id="getNoticeListCount" parameterType="hashmap" resultType="integer">
+        SELECT	COUNT(notice.notice_seq)
+        FROM 	tb_notice notice
+        		,tb_manager manager
+        <include refid="noticeWhere"/>
+    </select>
+    
+    <select id="getNoticeList" parameterType="hashmap" resultType="hashmap">
+    	SELECT	notice.notice_seq	AS "notice_seq"
+    			,notice.title		AS "title"
+    			,notice.content		AS "content"
+    			,notice.post_yn		AS "post_yn"
+    			,notice.del_yn		AS "del_yn"
+    			,DATE_FORMAT(notice.reg_date, '%Y-%m-%d %H:%i:%s')	AS "reg_date"
+    			,DATE_FORMAT(notice.upt_date, '%Y-%m-%d %H:%i:%s')	AS "upt_date"
+    	FROM	tb_notice notice
+        		,tb_manager manager
+        <include refid="noticeWhere"/>
+    	ORDER BY notice.notice_seq desc
+    </select>
+
+</mapper>

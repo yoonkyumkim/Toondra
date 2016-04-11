@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="API.Member">
+
+
+    <select id="getEmailOverlapCheck" parameterType="hashmap" resultType="java.lang.Integer">
+      	SELECT 		COUNT(member_seq)
+      	FROM		tb_member
+      	WHERE		email = #{email}
+    </select>
+    
+    
+	<insert id="insertMember" parameterType="hashmap">
+		INSERT INTO tb_member
+        	(
+        		email
+				, password
+				, cert_state
+				, cert_key
+				, reg_date
+				, upt_date
+        	)
+		VALUES
+			(
+				#{email}
+				, #{password}
+				, 'N'
+				, #{certKey}
+				, NOW()
+				, CURRENT_TIMESTAMP
+			)
+	
+	</insert>
+
+
+	<select id="updateMemberConfirm" parameterType="hashmap" resultType="java.lang.Integer">
+		UPDATE 		tb_member
+		SET 		cert_state = 'Y'
+		WHERE 		cert_key=#{certKey}
+	</select>
+    
+    
+</mapper>

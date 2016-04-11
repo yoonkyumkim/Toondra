@@ -1,0 +1,36 @@
+package kr.co.toondra.web.login.service;
+
+import java.util.HashMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.common.util.Hash;
+import kr.co.toondra.common.util.SessionUtil;
+import kr.co.toondra.web.login.dao.LoginDao;
+
+@Service
+public class LoginService {
+
+	@Autowired
+	LoginDao dao = new LoginDao();
+	
+	public boolean login(PMap pMap) {
+		
+		pMap.put("password", Hash.sha512(pMap.getString("password")));
+		
+		HashMap<String, Object> userInfo = dao.login(pMap);
+		if(userInfo != null && !userInfo.isEmpty()) {
+			SessionUtil session = new SessionUtil();
+			session.setAttribute("s_manager_seq", userInfo.get("manager_seq"));
+			
+			session.setSessionUtilInRequest(pMap.getRequest());
+			
+			return true;
+		}
+		return false;
+		
+	}
+
+}

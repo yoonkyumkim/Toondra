@@ -1,0 +1,148 @@
+package common.dao;
+
+import java.util.HashMap;
+import java.util.List;
+
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+
+public class CommonDAO {
+	private SqlSessionFactory sqlSessionFactory;
+	private SqlSession sqlSession;
+	
+	public CommonDAO() {
+		try {
+			sqlSessionFactory = CommonSqlSessionFactory.getInstance().getSqlSessionFactory();
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public SqlSession getSqlSession(boolean autoCommit) {
+		return sqlSessionFactory.openSession(autoCommit);
+	}
+	
+	public void start() {
+		if(sqlSession != null) {
+			sqlSession.close();
+		}
+		sqlSession = getSqlSession(false);
+	}
+	
+	public void defaultStart() {
+		sqlSession = getSqlSession(true);
+	}
+
+	public void rollback() {
+		if(sqlSession != null) {
+			sqlSession.rollback();
+		}
+	}
+	
+	public void commit() {
+		if(sqlSession != null) {
+			sqlSession.commit();
+		}
+	}
+	
+	public void close() {
+		if(sqlSession != null) {
+			sqlSession.close();
+			sqlSession = null;
+		}
+	}
+	
+	public <T> T selectOne(String sql) throws Exception {
+		boolean isGetSession = false;
+		if(sqlSession == null) {
+			isGetSession = true;
+			defaultStart();
+		}
+		T returnObj = sqlSession.selectOne(sql);
+		if (isGetSession) {
+			close();
+		}
+		return returnObj;
+	}
+	
+	
+	public <T> T selectOne(String sql, HashMap<String, Object> params) throws Exception {
+		boolean isGetSession = false;
+		if(sqlSession == null) {
+			isGetSession = true;
+			defaultStart();
+		}
+		T returnObj = sqlSession.selectOne(sql, params);
+		if (isGetSession) {
+			close();
+		}
+		return returnObj;
+	}
+	
+	public <E> List<E> selectList(String sql, HashMap<String, Object> params) throws Exception {
+		boolean isGetSession = false;
+		if(sqlSession == null) {
+			isGetSession = true;
+			defaultStart();
+		}
+		List<E> returnObj = sqlSession.selectList(sql, params);
+		if (isGetSession) {
+			close();
+		}
+		return returnObj;
+	}
+	
+	public <E> List<E> selectList(String sql) throws Exception {
+		boolean isGetSession = false;
+		if(sqlSession == null) {
+			isGetSession = true;
+			defaultStart();
+		}
+		List<E> returnObj = sqlSession.selectList(sql);
+		if (isGetSession) {
+			close();
+		}
+		return returnObj;
+	}
+	
+	public int insert(String sql, HashMap<String, Object> params) throws Exception {
+		boolean isGetSession = false;
+		if(sqlSession == null) {
+			isGetSession = true;
+			defaultStart();
+		}
+		int returnObj = sqlSession.insert(sql, params);
+		if (isGetSession) {
+			close();
+		}
+		return returnObj;
+	}
+	
+	public int update(String sql, HashMap<String, Object> params) throws Exception {
+		boolean isGetSession = false;
+		if(sqlSession == null) {
+			isGetSession = true;
+			defaultStart();
+		}
+		int returnObj = sqlSession.update(sql, params);
+		if (isGetSession) {
+			close();
+		}
+		return returnObj;
+	}
+	
+	public int delete(String sql, HashMap<String, Object> params) throws Exception {
+		boolean isGetSession = false;
+		if(sqlSession == null) {
+			isGetSession = true;
+			defaultStart();
+		}
+		int returnObj = sqlSession.delete(sql, params);
+		if (isGetSession) {
+			close();
+		}
+		return returnObj;
+	}
+
+}

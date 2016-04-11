@@ -1,0 +1,40 @@
+package kr.co.toondra.web.member.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.member.service.MemberService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping("/admin/member/")
+@Controller
+public class MemberController {
+
+	@Autowired
+	private MemberService service;
+	
+	@RequestMapping("/list")
+	public String getMemberListView(Model model) {
+		
+		return "toondra/member/memberList";
+	}
+	
+	@RequestMapping("/list/ajax")
+	public String getMemberList(HttpServletRequest req, Model model) {
+
+		PMap pMap = new PMap(req);
+		System.out.println("Pmap : " + pMap.toString());
+		
+		pMap.put("iDisplayStart", pMap.getInt("iDisplayStart"));
+		pMap.put("iDisplayLength", pMap.getInt("iDisplayLength"));
+		
+		model.addAllAttributes(service.getMemberList(pMap));
+		
+		return "jacksonView";
+	}
+	
+}

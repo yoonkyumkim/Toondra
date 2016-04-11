@@ -1,0 +1,24 @@
+package kr.co.toondra.api.community.service;
+
+import kr.co.toondra.api.bean.Result;
+import kr.co.toondra.api.community.dao.NoticeDao;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service("apiNoticeService")
+public class NoticeService {
+
+	@Autowired
+	private NoticeDao dao;
+
+	public Result getNoticeList() {
+
+		Result result = new Result();
+		result.putObject("total_cnt", dao.getNoticeListCount());
+		result.putObject("notice_list", dao.getNoticeList());
+		
+		return result;
+	}
+
+}

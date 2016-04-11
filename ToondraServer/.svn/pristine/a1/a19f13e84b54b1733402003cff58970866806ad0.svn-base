@@ -1,0 +1,51 @@
+package kr.co.toondra.web.login.controller;
+
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.base.controller.BaseController;
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.login.service.LoginService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+@RequestMapping("/admin/login")
+@Controller
+public class LoginController extends BaseController{
+	
+	@Autowired
+	LoginService service = new LoginService();
+
+	@RequestMapping(value = "/loginView", method = RequestMethod.GET)
+	public String loginView(HttpServletRequest request) {
+		
+		if(request.getSession().getAttribute("s_manager_seq") != null){
+			return "redirect:/admin/";
+		}
+		
+		return "toondra/login/loginView";
+	}
+	
+	@RequestMapping(value = "/loginDo")
+	public String login(HttpServletRequest request, Model model) throws Exception  {
+		
+		request.getSession().invalidate();
+		PMap pMap = new PMap(request);
+		model.addAttribute("result", service.login(pMap));
+		
+		return JSON_VIEW;
+	}
+	
+	@RequestMapping(value="/logout")
+	public String logout(HttpServletRequest request) {
+		
+		request.getSession().invalidate();
+		return "redirect:/admin/login/loginView";
+	}
+	
+	
+}

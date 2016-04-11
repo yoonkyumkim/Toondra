@@ -1,0 +1,99 @@
+/** ahope post css **/
+body{ 
+	overflow-x:hidden;overflow-y:hidden; 
+}
+
+table {
+	margin-bottom: 0px !important;
+}
+
+.popup_title {
+	background-color: #000;
+	color: #F37023;
+	height: 38px;
+	line-height: 38px;
+	vertical-align: middle;
+	text-align: center;
+	text-decoration: none;
+	font-size: 17px;
+	margin-bottom: 15px;
+}
+
+.post-wrapper-ahope {
+	text-align: center;
+}
+
+.post-tab-ahope {
+	margin: 15px 0px 15px 0px;
+}
+
+table {
+	text-align: center;		
+}
+th {
+	text-align: center;
+}
+
+.post-thead-ahope{
+	display: block;
+	background-color: #eee;
+}
+.post-thead-ahope tr th:first-child {
+	width: 120px;
+}
+.post-thead-ahope tr th:last-child {
+	width: 340px;
+}
+.post-tbody-ahope{
+    display: block;
+    height: 130px;
+    overflow-y: auto; 
+    overflow-x: hidden;
+}
+.post-tbody-ahope tr td:first-child {
+	width: 120px;
+}
+.post-tbody-ahope tr td:last-child {
+	width: 340px;
+}
+.post-tbody-ahope tr {
+	cursor: pointer;
+}
+.post-addr-ahope {
+	padding-top:15px;
+	padding-bottom:15px;
+	background-color: #eee;
+	text-align: center;
+}
+.post-addr-detail-ahope {
+	margin: 5px;
+}
+
+
+.popup-thead-ahope{
+	display: block;
+	background-color: #eee;
+}
+
+.popup-tbody-ahope {
+    display: block;
+    height: 130px;
+    overflow-y: auto; 
+    overflow-x: hidden;
+}
+
+.popup-tbody-ahope tr {
+	cursor: pointer;
+}
+
+.author-table-ahope tr td {
+	width: 400px;
+}
+
+.popup_result {
+	height: 80px;
+	line-height: 38px;
+	vertical-align: middle;
+	background-color: #eee;
+	text-align: center;
+}

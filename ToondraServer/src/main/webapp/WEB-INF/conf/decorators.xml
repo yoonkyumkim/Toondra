@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<decorators defaultdir="/WEB-INF/views/">
+	
+	<!-- 제외 -->
+	<excludes>
+		<pattern>/admin/login/**</pattern>
+		<pattern>/admin/**/ajax</pattern>
+		<pattern>/web/sample/**</pattern>
+		<pattern>/*/*/popup/*</pattern>
+		<pattern>/api/**</pattern>
+	</excludes>
+	
+	<decorator name="layout" page="layout/layout.jsp">
+		<pattern>/admin/*</pattern>
+	</decorator>
+	
+</decorators>
+

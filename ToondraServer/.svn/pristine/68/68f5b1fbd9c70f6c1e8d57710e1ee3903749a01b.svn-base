@@ -1,0 +1,74 @@
+package kr.co.toondra.api.coin.service;
+
+import java.util.HashMap;
+
+import kr.co.toondra.api.bean.Result;
+import kr.co.toondra.api.coin.dao.CoinDao;
+import kr.co.toondra.common.exception.LogicException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service("apiCoinService")
+public class CoinService {
+
+	@Autowired
+	private CoinDao dao;
+	
+	public Result getCoinMember(HashMap<String, Object> param) throws Exception{
+		
+		Result result = new Result();
+		
+		String memberSeq = dao.getMemberSeq((String)param.get("login_key"));
+		
+		if(memberSeq == null || memberSeq.equals("")){
+			throw new LogicException("[Query] not found data { member_seq }", "402");
+		}
+		
+		param.put("member_seq", memberSeq);
+		
+		result.putObject("retention_coin", dao.getCoinMember(param));
+		
+		return result;
+	}
+	
+	public Result getCoinProduct(HashMap<String, Object> param) throws Exception{
+		
+		Result result = new Result();
+		
+		String memberSeq = dao.getMemberSeq((String)param.get("login_key"));
+
+		if(memberSeq == null || memberSeq.equals("")){
+			throw new LogicException("[Query] not found data { member_seq }", "402");
+		}
+		
+		param.put("member_seq", memberSeq);
+		
+		result.putObject("coin_product_list", dao.getCoinProduct(param));
+		
+		return result;
+	}
+	
+	
+	public Result getCoinPurchaseHistory(HashMap<String, Object> param) throws Exception{
+		
+		Result result = new Result();
+		
+		String memberSeq = dao.getMemberSeq((String)param.get("login_key"));
+		
+		if(memberSeq == null || memberSeq.equals("")){
+			throw new LogicException("[Query] not found data { member_seq }", "402");
+		}
+		
+		param.put("member_seq", memberSeq);
+		HashMap<String, Object> dataMap = new HashMap<String, Object>();
+		
+		dataMap.put("total_cnt", dao.getCoinHistoryTotalCnt(param));
+		
+		result.putObject("purchase_list", dao.getCoinPurchaseHistory(param));
+		
+		return result;
+	}
+	
+	
+}

@@ -1,0 +1,24 @@
+package kr.co.toondra.web.home.controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+public class HomeController {
+	
+	protected Logger logger = Logger.getLogger(this.getClass());	
+	
+	@RequestMapping(value = "/")
+	public String index(HttpServletRequest request, Model model, HttpServletResponse response) {
+		logger.debug("[ST][/HOME]");
+		
+		logger.debug("[ED][/HOME]");
+		return "toondra/login/loginView";
+	}
+
+}

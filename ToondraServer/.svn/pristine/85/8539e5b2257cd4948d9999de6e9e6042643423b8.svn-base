@@ -1,0 +1,5 @@
+package kr.co.toondra.web.author.service;
+
+public class AuthorService {
+
+}

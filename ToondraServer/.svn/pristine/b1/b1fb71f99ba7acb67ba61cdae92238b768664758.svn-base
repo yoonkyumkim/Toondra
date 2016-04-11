@@ -1,0 +1,86 @@
+.btn-ahope {
+	color: #fff;
+	background-color: #F37023;
+	border-color: #B04F17;
+}
+.btn-ahope:hover,
+.btn-ahope:focus,
+.btn-ahope.focus,
+.btn-ahope:active,
+.btn-ahope.active {
+	color: #fff;
+	background-color: #E56B22;
+	border-color: #B04F17;
+}
+
+
+/** navigation bar **/
+.navbar-brand-ahope:focus, .navbar-brand-ahope:hover {
+	color: #F37023;
+	background-color: transparent;
+	text-decoration: none;
+	font-size: 23px;
+}
+
+.navbar-brand-ahope {
+	font-weight: bold;
+	color: #F37023;
+	float: left;
+	height: 50px;
+	padding: 15px 15px;
+	font-size: 20px;
+	line-height: 20px;
+}
+
+.navbar-top-ahope {
+	background-color: #000000 !important;
+}
+.navbar-top-ahope:hover, .navbar-top-ahope:focus  {
+	background-color: #000000 !important;
+	color: #70BDFF;
+}
+.sidebar {
+	background-color: #f8f8f8;
+}
+.minus-circle-ahope {
+	color: #F37023;
+	size: 20px;
+}
+
+.navbar-siderbar-ahope {
+	
+}
+.navbar-siderbar-ahope:focus, a .navbar-siderbar-ahope:hover  {
+	
+}
+
+/** pagination **/
+.pagination>.active>a, .pagination>.active>a:focus, .pagination>.active>a:hover, .pagination>.active>span, .pagination>.active>span:focus, .pagination>.active>span:hover {
+  z-index: 2;
+  color: #fff;
+  cursor: default;
+  background-color: #F37023;
+  border-color: #F37023;
+}
+
+
+/** detail view **/
+.page-header-ahope {
+	margin-bottom: 10px;
+}
+.page-header-desc-ahope {
+	margin: 0px 0px 40px;
+	border-bottom: 0px;
+}
+
+.btn-left {
+	float: left;
+	text-align: left;
+}
+.btn-right {
+	text-align: right;
+}
+
+.btn-center {
+	text-align: center;
+}

@@ -1,0 +1,169 @@
+package kr.co.toondra.api.member.service;
+
+import java.util.HashMap;
+import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.api.bean.Result;
+import kr.co.toondra.api.member.dao.MemberDao;
+import kr.co.toondra.common.exception.RuntimeLogicException;
+import kr.co.toondra.common.util.CommonUtil;
+import kr.co.toondra.common.util.Hash;
+import kr.co.toondra.common.util.MailSender;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+
+@Service("apiMemberService")
+public class MemberService {
+	
+	
+	@Value("${mail.address}")
+	private String MAIL_ADDRESS;
+	
+	
+	
+	@Autowired
+	private MemberDao dao;
+	
+	@Autowired
+	private MailSender sender;
+	
+	
+	
+	public Result insertMember(HashMap<String, Object> param) throws Exception {
+
+		//필수 값 확인
+		CommonUtil.paramCheck(param, new String[] {"email", "password"});
+
+		Result result = new Result();
+		
+		String email = (String)param.get("email");
+		String password = (String)param.get("password");
+		
+		
+		if(!CommonUtil.isEmail(email) || password.length() < 8 || password.length() > 15) {
+			throw new RuntimeLogicException("Does not apply right format", "401");
+		}
+		
+			
+		//이메일 중복 확인
+		if(dao.getEmailOverlapCheck(param) == 0){
+
+			String certKey = UUID.randomUUID().toString().replace("-", "");
+			
+			param.put("certKey", certKey);
+			
+			String pwd = Hash.sha512((String)param.get("password"));
+			
+			param.put("password", pwd);
+
+			//회원 가입
+			dao.insertMember(param);
+			
+			
+			//Email전송
+			sender.sendSmtpGMail((String)param.get("email")
+					, "Toondra 회원가입 인증 이메일입니다."
+					, "Toondra 회원가입 인증 이메일 입니다<html><head><title>Home</title></head><body><br><a href=\""+MAIL_ADDRESS+"/api/member/confirm?certKey="+certKey+"\">인증 하기</a>를 클릭해주세요</body></html>");
+			
+		} else {
+			result.setResp_code("400");
+			result.setResp_msg("EmailOverlapCheck");
+		}
+	
+		return result;
+	}
+	
+	
+	
+	public int updateMemberConfirm(HashMap<String, Object> param) throws Exception {
+		
+		//필수 값 확인
+		CommonUtil.paramCheck(param, new String[] {"certKey"});
+		
+		
+		if(dao.updateMemberConfirm(param) == 0){
+			return 0;
+		}
+		
+		return 1;
+	}
+	
+	
+	public Result memberLogin(HashMap<String, Object> param) throws Exception {
+		
+		//필수 값 확인
+		CommonUtil.paramCheck(param, new String[] {"email", "password", "device_id"});
+		
+		Result result = new Result();
+		
+		String email = (String)param.get("email");
+		String password = (String)param.get("password");
+		
+		
+		if(!CommonUtil.isEmail(email) || password.length() < 8 || password.length() > 15) {
+			throw new RuntimeLogicException("Does not apply right format","401");
+		}
+		
+		
+		String pwd = Hash.sha512((String)param.get("password"));
+		
+		param.put("password", pwd);
+		
+		HashMap<String, Object> memberInfo = dao.getMemberInfo(param);
+		
+		param.put("member_seq", memberInfo.get("member_seq"));
+		
+		
+		//인증 상태 (인증 : Y, 미 인증 : N)
+		String certState = (String)memberInfo.get("cert_state");
+
+		
+		if(certState.equals("Y")){
+			
+			String loginKey = UUID.randomUUID().toString().replace("-", "");
+			
+			HashMap<String, Object> deviceInfo = dao.getDeviceInfo(param);
+			
+			param.put("device_seq", deviceInfo.get("device_seq"));
+			param.put("loginKey", loginKey);
+			
+			//기존 로그인 기록이 있으면 update
+			if(dao.getMemberLoginCheck(param) > 0) {
+				
+				dao.updateMemberLogin(param);
+				
+			} else {
+				//기존 로그인 기록이 없으면 insert
+				dao.insertMemberLogin(param);
+				
+			}
+			
+			result.putObject("email", memberInfo.get("email"));
+			result.putObject("push_yn", memberInfo.get("push_yn"));
+			result.putObject("login_key", loginKey);
+			
+		}
+		
+		result.putObject("cert_state", certState);
+		
+		return result;
+	}
+	
+	public Result updateMemberLogout(HashMap<String, Object> param, HttpServletRequest request) throws Exception {
+		
+		String loginKey = request.getHeader("login_key");
+		
+		Result result = new Result();
+		
+		dao.updateMemberLogout(loginKey);
+		
+		
+		return result;
+	}
+
+}

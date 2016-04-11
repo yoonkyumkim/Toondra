@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="API.Coin">
+
+	<select id="getMemberSeq" parameterType="java.lang.String" resultType="java.lang.String">
+    	SELECT 
+    				IFNULL(member_seq, "") AS member_seq
+    				
+		FROM 		tb_member_login
+		WHERE 		login_key = #{loginKey}
+    </select>
+    
+    
+    <select id="getCoinMember" parameterType="hashmap" resultType="java.lang.Integer">
+    	SELECT
+    				IFNULL(retention_coin, 0) AS retention_coin
+    	
+    	FROM		tb_member
+    	WHERE		member_seq = #{member_seq}
+    </select>
+    
+    
+    <select id="getCoinProduct" parameterType="hashmap" resultType="hashmap">
+    	SELECT
+    				product_id
+    				, coin
+    				, amt
+    				, product_name
+    	
+    	FROM		tb_coin_product
+    	WHERE		member_seq = #{member_seq}
+    </select>
+    
+    
+    <select id="getCoinPurchaseHistory" parameterType="hashmap" resultType="hashmap">
+    	SELECT
+					purchase_amt
+					,  DATE_FORMAT(cpu.purchase_date, '%Y-%m-%d %H:%i:%s') AS purchase_date
+		
+		FROM 		tb_member AS mem INNER JOIN tb_coin_purchase AS cpu ON mem.member_seq = cpu.member_seq
+		WHERE 		cpu.purchase_state = '01' AND mem.member_seq = #{member_seq}
+    </select>    
+    
+    
+    <select id="getCoinHistoryTotalCnt" parameterType="hashmap" resultType="hashmap">
+    	SELECT
+					COUNT(*)
+					
+		FROM 		tb_member AS mem INNER JOIN tb_coin_purchase AS cpu ON mem.member_seq = cpu.member_seq
+		WHERE 		cpu.purchase_state = '01' AND mem.member_seq = #{member_seq}
+    </select>
+    
+    
+    <select id="getCoinProductInfo" parameterType="hashmap" resultType="hashmap">
+    	SELECT 
+    				product_id
+    				, coin
+    				, amt
+    				, product_name
+    	FROM 		tb_coin_product
+    	WHERE		product_id = #{product_id}
+    </select>
+    
+    
+    <insert id="insertCoinPurchase" parameterType="hashmap">
+    
+	    <selectKey resultType="java.lang.Integer" keyProperty="purchase_seq" order="AFTER">
+	        SELECT MAX(IFNULL(purchase_seq, 1)) FROM tb_coin_purchase        
+	    </selectKey>
+    
+    	INSERT INTO	tb_coin_purchase
+    		(
+    			member_seq
+    			, purchase_coin
+    			, purchase_amt
+    			, purchase_state
+    			, product_id
+    			, reg_date
+    			
+    		)
+    	VALUES
+    		(
+    			#{member_seq}
+    			, #{coin}
+    			, #{amt}
+    			, '00'
+    			, #{product_id}
+    			, NOW()
+    		)
+    </insert>
+    
+    
+    <update id="updateCoinPurchaseComplete" parameterType="hashmap">
+    
+    	UPDATE		tb_coin_purchase
+    	SET			<if test="purchase_state == '01' or purchase_state == '02'">
+    				purchase_state = #{purchase_state}
+    				</if>
+    				, purchase_date = #{purchase_date}
+    				, order_id = #{order_id}
+		WHERE	    purchase_seq = #{purchase_seq}
+    </update>
+    
+    
+    <select id="getPurchaseCoin" parameterType="hashmap" resultType="java.lang.Integer">
+    	SELECT
+    				purchase_coin
+    				
+    	FROM		tb_coin_purchase
+    	WHERE		purchase_seq = #{purchase_seq} AND purchase_state = '01'
+    
+    </select>
+    
+    
+    <update id="updateMemberCoinAdd" parameterType="hashmap">
+    	UPDATE		tb_member
+    	SET
+    				retention_coin = #{retention_coin}
+    				, upt_date = NOW()
+    	WHERE		member_seq = #{member_seq}
+    </update>
+    
+    
+</mapper>

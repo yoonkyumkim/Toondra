@@ -1,0 +1,51 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="decorator" uri="http://www.opensymphony.com/sitemesh/decorator"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>
+			<decorator:title default="Spring-SiteMesh" />
+		</title>
+		
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+		<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" >
+		<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/metisMenu.min.css" >
+		<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/sb-admin-2.css" >
+		<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/font-awesome.min.css" >
+		<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/ahope.css" >
+		<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/libs/DataTables/jquery.dataTables.css">
+		
+		<script src="${pageContext.request.contextPath}/resources/js/jquery-1.11.2.min.js"></script>
+		<script src="${pageContext.request.contextPath}/resources/js/bootstrap.min.js"></script>
+		<script src="${pageContext.request.contextPath}/resources/js/metisMenu.min.js"></script>
+		<script src="${pageContext.request.contextPath}/resources/js/sb-admin-2.js"></script>
+		<script	src="${pageContext.request.contextPath}/resources/libs/DataTables/jquery.dataTables.js"></script>
+			
+		<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+		<!--[if lt IE 9]>
+			<script src="${pageContext.request.contextPath}/resources/libs/html5shiv/html5shiv-3.7.2.min.js"></script>
+			<script src="${pageContext.request.contextPath}/resources/libs/respond/respond-1.4.2.min.js"></script>
+		<![endif]-->
+		
+		<decorator:head /> 
+	</head> 
+	
+	
+	<body> 
+	
+		<div id="wrapper">
+			
+			<!-- Navigator -->
+			<c:import url="/WEB-INF/views/layout/frameset/nav.jsp" />
+			
+			<!-- Main -->
+			<div id="page-wrapper">
+				<decorator:body />
+			</div>
+		
+		</div>
+	
+	</body> 
+</html>

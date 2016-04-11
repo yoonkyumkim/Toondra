@@ -1,0 +1,3 @@
+today = `date '+%Y%m%d'`.chomp
+cmd = "sh /home/platform/testObfus.sh >> /home/platform/webapp/webapp_appshield/APPShieldWeb/logs/obfuscation_cron_log/charged_obfus_cron_#{today}.log"
+system(cmd)

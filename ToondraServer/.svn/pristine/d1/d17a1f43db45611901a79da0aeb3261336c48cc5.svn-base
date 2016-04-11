@@ -1,0 +1,102 @@
+package kr.co.toondra.web.work.dao;
+
+import java.util.HashMap;
+import java.util.List;
+
+import kr.co.toondra.base.dao.BaseDao;
+import kr.co.toondra.common.collection.PMap;
+
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class WorkDao extends BaseDao{
+	
+	public List<HashMap<String,Object>> searchAuthor(PMap pMap) {
+		return selectList("Work.searchAuthor", pMap);
+	}
+
+	public List<HashMap<String,Object>> genreList() {
+		return selectList("Work.genreList");
+	}
+
+	public int insertWork(PMap pMap) {
+		return insert("Work.insertWork", pMap);
+	}
+
+	public HashMap<String,Object> getWorkSeq() {
+		return selectOne("Work.getWorkSeq");
+	}
+
+	public int insertAuthorGenre(HashMap<String, Object> map) {
+		return insert("Work.insertAuthorGenre", map);
+		
+	}
+
+	public int insertDay(HashMap<String, Object> map) {
+		return insert("Work.insertDay", map);
+	}
+
+	public int insertWorkGenre(HashMap<String, Object> map) {
+		return insert("Work.insertWorkGenre", map);
+	}
+
+	public int insertWorkAuthor(HashMap<String, Object> map) {
+		return insert("Work.insertWorkAuthor", map);
+		
+	}
+	
+	public int getWorkTotalCnt(PMap pMap) {
+		return selectOne("Work.workTotalCnt", pMap);
+	}
+	
+	public List<HashMap<String,Object>> getWorkList(PMap pMap){
+		return selectList("Work.workList", pMap);
+	}
+
+	public int updateWorkState(PMap pMap) {
+		return update("Work.updateWorkState", pMap);
+	}
+
+	public int deleteWork(PMap pMap) {
+		return delete("Work.deleteWork", pMap);
+	}
+	public HashMap<String, Object> getWork(PMap pMap){
+		return selectOne("Work.getWork", pMap);
+	}
+	public List<HashMap<String, Object>> getDay(PMap pMap) {
+		return selectList("Work.getDay", pMap);
+	}
+	public List<HashMap<String, Object>> getGenre(PMap pMap) {
+		return selectList("Work.getGenre", pMap);
+	}
+
+	public List<HashMap<String, Object>> getAuthor(PMap pMap) {
+		return selectList("Work.getAuthor",  pMap);
+	}
+
+	public int delWorkAuthor(HashMap<String, Object> map) {
+		return delete("Work.deleteWorkAuthor", map);
+	}
+
+	public int updateWorkAuthor(HashMap<String, Object> map) {
+		return update("Work.updateWorkAuthor", map);
+	}
+
+	public int delWorkGenre(HashMap<String, Object> map) {
+		return delete("Work.delWorkGenre", map);
+	}
+
+	public int updateWorkGenre(HashMap<String, Object> map) {
+		return update("Work.updateWorkGenre", map);
+	}
+
+	public int updateWork(PMap pMap) {
+		return update("Work.updateWork", pMap);
+	}
+
+	public int deleteDay(PMap pMap) {
+		return delete("Work.deleteDay", pMap);
+	}
+
+}
+	

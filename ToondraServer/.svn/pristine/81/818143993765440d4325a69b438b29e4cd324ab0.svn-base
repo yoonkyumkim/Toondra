@@ -1,0 +1,246 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+  <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+ <% response.setContentType("text/html; charset=utf-8"); %>
+ 
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<script type="text/javascript">
+var	authorCnt = 0;
+var genreCnt = 0;
+$(document).ready(function(){
+	if("${result}" == "success"){
+		cAlert("등록 성공",function() {
+			location.href="${pageContext.request.contextPath }/admin/work/workListView";
+		})
+	} 
+	if("${result}" == "fail") {
+		cAlert("예기치 못한 오류로 인한 실패");
+	}
+	add_author();
+	add_genre();
+});
+
+function work_listView() {
+	location.href="${pageContext.request.contextPath }/admin/work/workListView";
+}
+
+function add_author(){
+	authorCnt++;
+	$("#authorCnt").val(authorCnt);
+	var contents = "";
+	
+	contents += "<div class=\"authorList\" id=\"author"+authorCnt+"\">"
+	contents += "<div class=\"form-group\">"
+	contents += "    <label class=\"col-sm-2 control-label\">작가ID</label>"
+	contents += "    <input type=\"hidden\" class=\"authorSeq\" name=\"author_seq\" id=\"author_seq"+authorCnt+"\" >"
+	contents += "	 <div class=\"col-lg-20\">"
+	contents += "	 <div class=\"col-sm-3\">";
+	contents += "    	<input type=\"text\" class=\"form-control\" id=\"author_id"+authorCnt+"\" placeholder=\"ID\" readonly=\"readonly\">"
+	contents += "    </div>"
+	contents += "    <div class=\"col-sm-2\">"
+	contents += "    <label class=\"control-label\">작가이름</label>"
+	contents += "    </div>"
+	contents += "	 <div class=\"col-sm-3\">"
+	contents += "    	<input type=\"text\" class=\"form-control\" id=\"author_name"+authorCnt+"\" placeholder=\"NAME\"  readonly=\"readonly\" >"
+	contents += "    </div>"
+	contents += "<a href=\"javascript:void(0)\" class=\"btn btn-default\" onclick=\"javascript:author_popup('"+authorCnt+"')\">검색</a>"
+	contents += "<button class=\"btn btn-default\" type=\"button\" onclick=\"javascript:del_author('"+authorCnt+"')\">"
+	contents += "	<i class=\"fa fa-minus-circle fa-lg minus-circle-ahope\"></i>"
+	contents += "</button>"
+	contents += "</div>"
+	contents += "</div>"
+	contents += "</div>"
+	
+	$("#author_list").append(contents);
+}
+function del_author(index) {
+	if(authorCnt<=1){
+		cAlert("하나이상의 작가가 필요합니다.");
+		return;
+	}
+	authorCnt--;
+	$("#authorCnt").val(authorCnt);
+	$("#author"+index).remove();
+}
+
+
+
+function add_genre() {
+	genreCnt++;
+	$("#genreCnt").val(genreCnt);
+	var genre_seq = new Array();
+	var genre_name = new Array();
+	<c:forEach items="${genreList}" var="item" >
+		genre_seq.push("${item.genre_seq}");
+		genre_name.push("${item.genre_name}");
+	</c:forEach>
+	var contents = "";
+	contents += "<div class=\"form-group\" id=\"genre"+genreCnt+"\">";
+	contents += "	<label class=\"col-sm-2 control-label\">장르</label>";
+	contents += "	<div class=\"col-sm-3\">"
+	contents += "	<select class=\"form-control\" name=\"genre_seq\">";
+	for(var i = 0 ; i <genre_seq.length; i++) {
+	contents += "			<option value=\""+genre_seq[i]+"\">"+genre_name[i]+"</option>";
+	}	
+	contents += "	</select>"
+	contents += "	</div>"
+	contents += "	<button class=\"btn btn-default\"  type=\"button\" onclick=\"javascript:del_genre('"+genreCnt+"')\">"
+	contents += "		<i class=\"fa fa-minus-circle fa-lg minus-circle-ahope\"></i>"
+	contents += "	</button>"
+	contents += "</div>"
+	contents += "</div>"
+	
+	$("#genre_list").append(contents);
+} 
+
+function del_genre(index) {
+	if(genreCnt<=1){
+		cAlert("하나이상의 작가가 필요합니다.");
+		return;
+	}
+	genreCnt--;
+	$("#genreCnt").val(genreCnt);
+	$("#genre"+index).remove();
+}
+
+function author_popup(author_cnt){
+	var url = "${pageContext.request.contextPath}/admin/work/popup/authorPopup?author_cnt=" + author_cnt;
+	LeftPosition = (screen.width) ? (screen.width-600)/2 : 0;
+	TopPosition = (screen.height) ? (screen.height-280)/2 : 0;
+	
+	settings = 'height=400,width=400,top='+parseInt(TopPosition)+',left='+parseInt(LeftPosition)+',scrollbars=no';
+
+	var popup = window.open(url, 'popup', settings);
+	
+	if (popup == null) {
+		cAlert("팝업 차단 기능이 설정되어 있습니다. \n\n팝업을 허용해 주시고 다시 시도해 주세요");
+	}
+	popup.focus();
+	
+}
+
+function work_insert() {
+	if($("#work_name").val() == ''){
+		cAlert("작품명을 입력하세요");
+			$("#work_name").focus();
+		return;
+	}
+	var ad = $('#author_list').find('input[type=text]')
+	for(var i = 0; i<ad.length; i++) {
+		if(ad[i].value.trim() == ''){
+			cAlert("작가를 선택하세요");
+			ad[i].focus();
+			return;
+		}
+	}
+	var gen = $('#author_list').find('.authorSeq')
+	for(var i = 0; i<gen.length-1; i++) {
+		for(var j = i + 1; j < gen.length; j++) {
+			if(gen[i].value == gen[j].value) {
+				cAlert("같은 작가를 가질수 없습니다.");
+				return;
+			}
+		}
+	}
+	var gen = $('#genre_list').find('select')
+	for(var i = 0; i<gen.length-1; i++) {
+		for(var j = i + 1; j < gen.length; j++) {
+			if(gen[i].value == gen[j].value) {
+				cAlert("같은 장르를 가질수 없습니다.");
+				return;
+			}
+		}
+	}
+	if($("#thumbnail_img_name").val() == ''){
+		cAlert("섬네일 이미지를 업로드 해주세요");
+			$("#work_name").focus();
+		return;
+	}
+	var form = document.getElementById("work_form");
+	form.submit();
+}
+</script>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Work Insert</title>
+<script src="${pageContext.request.contextPath }/resources/js/jquery.form.js" ></script>
+</head>
+<body>
+<div class="row">
+		<div class="col-lg-12">
+			<h3 class="page-header page-header-ahope">작품관리 > 작품등록</h3>
+			<h5 class="page-header page-header-desc-ahope">작품를 등록합니다.</h5>
+		</div>
+</div>
+<div class="row">
+	<div class="col-lg-7" >
+		<form class="form-horizontal" id="work_form" name="work_form" action="${pageContext.request.contextPath}/admin/work/insertWork" method="post" enctype="multipart/form-data">
+			<div class="form-group">
+				<label class="col-sm-2 control-label">작품명</label>
+				<div class="col-sm-5">
+					<input type="text" class="form-control" maxlength="20" name="work_name" id="work_name" >
+				</div>
+			</div>
+			<div class="form-horizontal" id="author_list">
+			</div>
+			<div >
+				<label class="col-sm-2 control-label"></label>
+				<button class="btn btn-info btn-circle"  type="button" onclick="add_author()">
+					<i class="fa fa-plus"></i>
+				</button>작가추가
+			</div><br/>
+			<div class="form-group">
+			    <label class="col-sm-2 control-label">작품설명</label>
+			    <div class="col-sm-7">
+			    	<input type="text" class="form-control" size="50" id="work_desc" name="work_desc">
+			    </div>
+			</div>
+			<div id="day_list">
+				<div class="form-group">
+				    <label class="col-sm-2 control-label">요일</label>
+				    <div class="col-sm-7">
+					    <input type="checkbox" name="day" id="day" value="1">월
+					    <input type="checkbox" name="day" id="day" value="2">화
+					    <input type="checkbox" name="day" id="day" value="3">수
+					    <input type="checkbox" name="day" id="day" value="4">목
+					    <input type="checkbox" name="day" id="day" value="5">금
+					    <input type="checkbox" name="day" id="day" value="6">토
+					    <input type="checkbox" name="day" id="day" value="7">일
+				    </div>
+				</div>
+			</div>
+		
+			<div id="genre_list" >
+				
+			</div>
+			<div>
+				<label class="col-sm-2 control-label"></label>
+				<button class="btn btn-info btn-circle"  type="button" onclick="add_genre()">
+					<i class="fa fa-plus"></i>
+				</button>장르추가
+			</div><br>
+			<div class="form-group"  >
+			    <label class="col-sm-2 control-label">썸네일 이미지</label>
+			    <div class="col-sm-5">
+			    	<input type="file" class="form-control" name="thumbnail_img_name" id="thumbnail_img_name" >
+			    </div>
+			</div>
+			<div class="form-group">
+			    <label class="col-sm-2 control-label">작품 완료</label>
+			    <div class="col-sm-3">
+			    	<input type="checkbox" name="fin_yn" id="fin_yn" value="Y" >완료
+			    </div>
+			</div>
+			<div class="form-horizontal" align="center">
+				<div class="col-lg-offset-2 col-lg-10 btn-center">
+					<button type="button" class="btn btn-default" id="delete_btn" onclick="work_listView()">목록</button>
+					<button type="button" class="btn btn-ahope" id="insert_btn" onclick="work_insert()">작성</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+</body>
+</html>

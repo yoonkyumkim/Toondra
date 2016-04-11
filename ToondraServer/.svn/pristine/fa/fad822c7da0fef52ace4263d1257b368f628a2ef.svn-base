@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="Inquiry">
+
+  	<sql id="inquiryWhere">
+    	<choose>
+    		<when test='(startRegDate != null and startRegDate != "") and (endRegDate == null or endRegDate == "")'>
+		  		<![CDATA[
+	    			AND	inquiry.reg_date >= STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='(startRegDate == null or startRegDate == "") and (endRegDate != null and endRegDate != "")'>
+    			<![CDATA[
+	    			AND	inquiry.reg_date <= STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='(startRegDate != null and startRegDate != "") and (endRegDate != null and endRegDate != "")'>
+				AND inquiry.reg_date 
+					BEETWEEN STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+					AND STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+    		</when>
+    	</choose>
+    	<if test='email != null and email != ""'>
+    	AND		member.email LIKE CONCAT('%','#{email}','%')
+    	</if>
+    	<if test='postYn == "Y" '>
+    	AND		inquiry.answer_manager_seq != ""
+    	</if>
+    	<if test='postYn == "N" '>
+    	AND		inquiry.answer_manager_seq == ""
+    	</if>
+    </sql>
+    
+    <select id="getInquiryCategory" resultType="hashmap">
+    	SELECT	child.code_seq		AS "codeSeq"
+				,child.code			AS "code"
+		        ,child.code_name 	AS "codeName"
+		FROM 	tb_code super
+				,tb_code child
+		WHERE 	super.code_seq = child.super_code_seq
+		AND		super.code = 'inquiry'
+		order by child.code_seq
+    </select>
+    
+    <select id="getInquiryListCount" parameterType="hashmap" resultType="integer">
+        SELECT	COUNT(inquiry.inquiry_seq)
+        FROM	tb_inquiry inquiry INNER JOIN tb_member member
+								   ON inquiry.member_seq = member.member_seq
+								   LEFT OUTER JOIN tb_manager manager
+								   ON inquiry.answer_manager_seq = manager.manager_seq
+								   INNER JOIN tb_code code
+								   ON inquiry.category_code_seq = code.code_seq
+		WHERE 1 = 1
+        <include refid="inquiryWhere"/>
+    </select>
+    
+    <select id="getInquiryList" parameterType="hashmap" resultType="hashmap">
+    	SELECT	inquiry.inquiry_seq			AS "inquirySeq"
+    			,inquiry.content			AS "content"
+    			,inquiry.answer				AS "answer"
+    			,DATE_FORMAT(inquiry.reg_date, '%Y-%m-%d %H:%i:%s')	AS "regDate"
+    			,DATE_FORMAT(inquiry.answer_date, '%Y-%m-%d %H:%i:%s')	AS "answerDate"
+    			,inquiry.answer_manager_seq	AS "managerSeq"
+    			,inquiry.member_seq			AS "memberSeq"
+    			,inquiry.category_code_seq	AS "categoryCodeSeq"
+    			,code.code_name				AS "categoryCodeName"
+    			,member.email				AS "email"
+    			,manager.id					AS "id"
+    			,IF(inquiry.answer_date IS NULL, 'N', 'Y') AS "answerYn"
+    			,IF(inquiry.answer_date IS NULL, '대기', '답변완료') AS "answerYnStr"
+    	FROM	tb_inquiry inquiry INNER JOIN tb_member member
+								   ON inquiry.member_seq = member.member_seq
+								   LEFT OUTER JOIN tb_manager manager
+								   ON inquiry.answer_manager_seq = manager.manager_seq
+								   INNER JOIN tb_code code
+								   ON inquiry.category_code_seq = code.code_seq
+		WHERE 1=1
+        <include refid="inquiryWhere"/>
+    	ORDER BY inquiry.inquiry_seq desc
+		<if test="iDisplayStart != null and iDisplayLength != null">
+		LIMIT 	#{iDisplayStart}, #{iDisplayLength}
+		</if>
+    </select>
+    
+    <select id="getInquiry" parameterType="hashmap" resultType="hashmap">
+    	SELECT	inquiry.inquiry_seq			AS "inquirySeq"
+    			,inquiry.content			AS "content"
+    			,inquiry.answer				AS "answer"
+    			,DATE_FORMAT(inquiry.reg_date, '%Y-%m-%d %H:%i:%s')	AS "regDate"
+    			,DATE_FORMAT(inquiry.answer_date, '%Y-%m-%d %H:%i:%s')	AS "answerDate"
+    			,inquiry.answer_manager_seq	AS "managerSeq"
+    			,inquiry.member_seq			AS "memberSeq"
+    			,inquiry.category_code_seq	AS "categoryCodeSeq"
+    			,code.code_name				AS "categoryCodeName"
+    			,member.email				AS "email"
+    			,manager.id					AS "id"
+    			,IF(inquiry.answer_date IS NULL, 'N', 'Y') AS "answerYn"
+    			,IF(inquiry.answer_date IS NULL, '대기', '답변완료') AS "answerYnStr"
+    	FROM	tb_inquiry inquiry INNER JOIN tb_member member
+								   ON inquiry.member_seq = member.member_seq
+								   LEFT OUTER JOIN tb_manager manager
+								   ON inquiry.answer_manager_seq = manager.manager_seq
+								   INNER JOIN tb_code code
+								   ON inquiry.category_code_seq = code.code_seq
+   		WHERE	inquiry.inquiry_seq = #{inquirySeq}
+    </select>
+    
+    <update id="answerInquiry" parameterType="hashmap">
+    	UPDATE	tb_inquiry
+    	SET		answer = #{answer}
+    			,answer_manager_seq = #{managerSeq}
+    			,answer_date = NOW()
+    	WHERE	inquiry_seq = #{inquirySeq}
+    </update>
+
+</mapper>

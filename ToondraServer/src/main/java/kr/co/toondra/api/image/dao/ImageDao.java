@@ -1,0 +1,21 @@
+package kr.co.toondra.api.image.dao;
+
+import java.util.HashMap;
+
+import org.springframework.stereotype.Repository;
+
+import kr.co.toondra.base.dao.BaseDao;
+import kr.co.toondra.common.collection.PMap;
+
+@Repository
+public class ImageDao extends BaseDao{
+	
+	public HashMap<String, String> getThumbnail(PMap pMap) {
+		return selectOne("Image.getThumbnail", pMap);
+	}
+
+	public HashMap<String, Object> getContentThumbnail(PMap pMap) {
+		return selectOne("Image.getContentThumbnail", pMap);
+	}
+
+}

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"	
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd">
+
+
+	<!-- property -->
+	<beans:bean class="kr.co.toondra.base.property.BasePropertyPlaceholderConfigurer">
+		<beans:property name="location" value="/WEB-INF/conf/jdbc.properties" />
+	</beans:bean>
+	
+	<beans:bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<beans:property name="driverClassName" value="${jdbc.driver}" />
+	    <beans:property name="url" value="${jdbc.url}" />
+	    <beans:property name="username" value="${jdbc.user}" />
+	    <beans:property name="password" value="${jdbc.password}" />
+	    
+	    <beans:property name="initialSize" value="5" />
+ 		<beans:property name="maxActive" value="20" />
+		<beans:property name="minIdle" value="5" />
+		<beans:property name="maxWait" value="3000" />
+		<beans:property name="poolPreparedStatements" value="true" />
+		<beans:property name="maxOpenPreparedStatements" value="50" />
+		
+		<beans:property name="validationQuery" value="select 1" />
+		<beans:property name="testWhileIdle" value="true" />
+		<beans:property name="timeBetweenEvictionRunsMillis" value="3600000" />
+		
+	</beans:bean>
+	
+ 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" 		ref="dataSource" />
+		<property name="mapperLocations" 	value="classpath*:kr/co/toondra/**/sql/*.xml" />
+	</bean>
+	
+</beans>

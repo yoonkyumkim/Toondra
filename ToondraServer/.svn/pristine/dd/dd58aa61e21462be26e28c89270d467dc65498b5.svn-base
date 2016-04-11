@@ -1,0 +1,112 @@
+package GCMSend.service;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+
+import javax.net.ssl.HttpsURLConnection;
+
+import GCMSend.dao.GCMDAO;
+
+public class GCMService {
+	
+	GCMDAO dao = new GCMDAO();
+	
+	final static String API_KEY = "AIzaSyDGh_9hpk9jk3qgy9-tiZWA3iITM7Q0VU4";
+	
+	
+	public void getGCMList() {
+		
+		try {
+			List<HashMap<String,Object>> gcmList = dao.getList();
+			List<String> regList =  dao.getRegist();
+			for(HashMap<String, Object> map : gcmList) {
+				int size = regList.size();
+				List<String> list;
+				for(int i = 0; size>0;i++) {
+					if(size>1000){
+						list = regList.subList(i*1000, (i*1000) + 1000);
+						sendMessage(list, map.get("title").toString(), map.get("content").toString());
+						size -= 1000;
+					} else {
+						list = regList.subList(i*1000, regList.size());
+						sendMessage(list, map.get("title").toString(), map.get("content").toString());
+						size = 0;
+					}
+				}
+			}
+			List<HashMap<String,Object>> workSeqList = dao.getWorkSeqList();
+			for(HashMap<String, Object> map : workSeqList) {
+				String content = map.get("work_name").toString() + "의 신작이 연재됬어요";
+				List<String> memeberPushList = dao.getMemberPushList(map);
+				int size = memeberPushList.size();
+				List<String> list;
+				for(int i = 0; size>0;i++) {
+					if(size>1000){
+						list = memeberPushList.subList(i*1000, (i*1000) + 1000);
+						sendMessage(list, "알림", content);
+						size -= 1000;
+					} else {
+						list = memeberPushList.subList(i*1000, memeberPushList.size());
+						sendMessage(list, "알림", content);
+						size = 0;
+					}
+					
+				}
+				dao.sendUpdate(map);
+			}
+		dao.commit();
+		} catch (Exception e) {
+			dao.rollback();
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public void sendMessage(List<String> regId, String title, String content) throws IOException {
+		String json = "{ \"registration_ids\" : " + regId + ", \"data\" :"
+				+ "{\"title\" : \"" + title+ "\", \"content\" : \"" + content +"\" } }";
+		OutputStream os = null;
+		InputStream is = null;
+		HttpsURLConnection urlConn = null;
+		URL url = new URL("https://android.googleapis.com/gcm/send");
+		urlConn = (HttpsURLConnection) url.openConnection();
+		
+		urlConn.setRequestMethod("POST");
+		urlConn.addRequestProperty("Authorization", "key=" + API_KEY);
+		urlConn.addRequestProperty("Content-Type", "application/json");
+		
+		urlConn.setDoInput(true);
+		urlConn.setDoOutput(true);
+		
+		os = urlConn.getOutputStream();
+		os.write(json.getBytes());
+		
+		System.out.println("(" + urlConn.getResponseCode() + "):" + urlConn.getResponseMessage());
+		
+		is = urlConn.getInputStream();
+		byte[] buf = new byte[1024];
+		
+		while(is.available() > 0) {
+			int readCount = is.read(buf);
+			if(readCount > 0) {
+				System.out.println(new String(buf, 0, readCount));
+			}
+		}
+		
+		if(is!=null)
+			is.close();
+		if(os!=null)
+			os.close();
+		if(urlConn!=null)
+			urlConn.disconnect();
+		
+	}
+
+}

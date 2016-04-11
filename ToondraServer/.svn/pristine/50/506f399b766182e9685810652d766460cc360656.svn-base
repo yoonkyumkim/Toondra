@@ -1,0 +1,28 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page session="false" %>
+<html>
+<head>
+	<title>Home</title>
+	<style type="text/css">
+        .preView { width: 70px; height: 70px; text-align: center; border:1px solid silver; }
+    </style>
+</head>
+
+	<script type="text/javascript">
+	
+     </script>
+<body>
+	<form action="${pageContext.request.contextPath}/web/sample/upfileTest" method="post" enctype="multipart/form-data">
+	
+		<input type="file" name="upfile">
+		<input type="submit" value="전송">
+	</form>
+	<img src="${pageContext.request.contextPath}/file/C:/upFile/Desert.jpg" alt="aa" id="ccc" name="ddd"/>
+	
+	
+	<a href="${pageContext.request.contextPath}/web/sample/exelTest">엑셀다운로드</a>
+	
+</body>
+</html>

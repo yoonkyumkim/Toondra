@@ -1,0 +1,43 @@
+package kr.co.toondra.web.content.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.base.controller.BaseController;
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.content.service.ContentService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping(value="/admin/content")
+@Controller
+public class ContentController extends BaseController{
+	
+	@Autowired
+	ContentService service = new ContentService();
+
+	@RequestMapping(value="/contentListView")
+	public String contentListView(HttpServletRequest request,Model model){
+		
+		PMap pMap = new PMap(request);
+		System.out.println("===================="+ pMap);
+		pMap = service.getWork(pMap);
+		model.addAllAttributes(pMap);
+		return "toondra/content/ContentList";
+	}
+	
+	@RequestMapping(value="/contentList")
+	public String contentList(HttpServletRequest request, Model model){
+		PMap pMap = new PMap(request);
+		System.out.println("=======" + pMap);
+		pMap.put("iDisplayStart", pMap.getInt("iDisplayStart"));
+		pMap.put("iDisplayLength", pMap.getInt("iDisplayLength"));
+		System.out.println(pMap.getInt("iDisplayStart"));
+		System.out.println(pMap.getInt("iDisplayLength"));
+		model.addAllAttributes(service.contentList(pMap));
+		
+		return JSON_VIEW;
+	}
+}

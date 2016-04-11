@@ -1,0 +1,40 @@
+package kr.co.toondra.api.member.controller;
+
+import java.util.HashMap;
+
+import kr.co.toondra.api.common.BaseController;
+import kr.co.toondra.api.member.service.MemberService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@RequestMapping("/api")
+@Controller("apiMemberController")
+public class MemberController extends BaseController {
+
+	
+	@Autowired
+	private MemberService service;
+	
+	@RequestMapping(value = "/member/join", method = RequestMethod.POST)
+	public String memberJoin(@RequestParam HashMap<String, Object> param, Model model) throws Exception{
+
+		model.addAttribute("result", service.insertMember(param));
+
+		return JSON_VIEW;
+	}
+	@RequestMapping(value = "/member/confirm", method = RequestMethod.GET)
+	public String memberConfirm(@RequestParam HashMap<String, Object> param, Model model) throws Exception{
+		
+		String result = "성공";
+		if(service.updateMemberConfirm(param) == 0){
+			result = "실패";
+		}
+		model.addAttribute("result",result);
+		return "toondra_api/member/memberConfirm";
+	}
+}

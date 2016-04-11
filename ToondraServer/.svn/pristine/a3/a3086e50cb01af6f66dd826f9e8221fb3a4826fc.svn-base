@@ -1,0 +1,30 @@
+.list-group-item.active-ahope, .list-group-item.active-ahope:focus, .list-group-item.active-ahope:hover {
+	z-index: 2;
+	color: #fff;
+	background-color: #F37023;
+	border-color: #F37023;
+}
+
+@media (min-width: 768px)
+.navbar>.container .navbar-brand-ahope, .navbar>.container-fluid .navbar-brand-ahope {
+	margin-left: -15px;
+}
+
+.navbar-brand-ahope:focus, .navbar-brand-ahope:hover {
+	color: #F37023;
+	background-color: transparent;
+	text-decoration: none;
+}
+
+.navbar-brand-ahope {
+	color: #b65706;
+	float: left;
+	height: 50px;
+	padding: 15px 15px;
+	font-size: 20px;
+	line-height: 20px;
+}
+
+.row {
+	margin-left: -23px !important;
+}

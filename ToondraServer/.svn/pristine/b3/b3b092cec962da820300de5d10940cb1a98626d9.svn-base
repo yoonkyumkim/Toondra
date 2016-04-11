@@ -1,0 +1,46 @@
+package kr.co.toondra.common.util;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class CommonUtil {
+	
+	public static boolean isNull(Object obj) {
+		boolean result = false;
+
+		if (obj == null) {
+			result = true;
+		} else if (obj instanceof String && obj.equals("")) {
+			result = true;
+		} else if (obj instanceof Map && ((Map<?, ?>) obj).isEmpty()) {
+			result = true;
+		} else if (obj instanceof Set && ((Set<?>) obj).isEmpty()) {
+			result = true;
+		} else if (obj instanceof List) {
+			List<?> list = (List<?>)obj;
+			if(list.size() == 0) {
+				result = true;
+			} else {
+				for(Object listObj: list) {
+					if(isNull(listObj)) {
+						result = true;
+						break;
+					}
+				}
+			}
+		} 
+		
+		return result;
+	}
+	
+	public static String nvl(String str, String dafault) {
+		if(isNull(str)) return dafault;
+		else return str;
+	}
+	
+	public static String nvl(String str){
+		return nvl(str, "");
+	}
+	
+}

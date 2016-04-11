@@ -1,0 +1,22 @@
+#!/bin/bash
+PID=`ps -ef | grep GCMScheduler | grep -v grep | awk '{print $2}'`
+PID2=`ps -ef | grep GCMScheduler | grep -v grep | awk '{print $2}'`
+#echo "PID : $PID"
+if [ -z "$PID" ] && [ -z "$PID2" ];
+	then
+		echo
+#		echo "Process Run"
+	else
+#		echo "Process Running"
+#		echo "Exit"
+		exit 1
+fi
+
+
+#. /WWW/paynow_bat/bin/setEnv.sh
+java -cp /home/platform/GCMScheduler/bin/:/home/platform/GCMScheduler/lib/mysql-connector-java-5.1.32-bin.jar:/home/ahope/testScheduler/lib/mybatis-3.1.1.jar GCMSend.GCMSend
+
+
+#LOG=/WWW/paynow_bat/logs/offerBAT_`date '+%y%m%d%H%M'`.log
+#echo $JAVA_HOME/bin/java $MEM_ARGS -cp $CLASSPATH com.paynow.opg.offerSchedule 
+#$JAVA_HOME/bin/java $MEM_ARGS -cp $CLASSPATH com.paynow.opg.offerSchedule > $LOG & "$@"

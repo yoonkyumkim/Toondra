@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="API.Inquiry">
+
+	<select id="insertInquiry" parameterType="hashmap" resultType="java.lang.Integer" >
+		INSERT INTO tb_inquiry
+			(
+				member_seq
+				, category_code_seq
+				, content
+				, reg_date
+				
+			) 
+		VALUES
+			(
+				#{member_seq}
+				, #{category_code_seq}
+				, #{content}
+				, NOW()
+			
+			)
+	</select>
+	
+	
+	<select id="getMemberSeq" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT 
+					IFNULL(member_seq, "") AS member_seq
+					
+		FROM		tb_member_login
+		WHERE		login_key = #{loginKey}
+	
+	</select>
+	
+</mapper>

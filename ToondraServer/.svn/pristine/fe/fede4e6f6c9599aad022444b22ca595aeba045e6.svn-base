@@ -1,0 +1,307 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<!DOCTYPE html>
+<html>
+<head>
+<title>FAQList</title>
+
+<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/jquery-ui.min.css" >
+<script type="text/javascript" src="${pageContext.request.contextPath}/resources/js/jquery-ui.min.js"></script>
+
+<script type="text/javascript">
+	$(function(){
+		tableInit();
+		
+		//date picker
+		$("#startRegDate").datepicker({
+			showOn: "both", 
+			buttonText: '<i class="fa fa-calendar cal-btn-ahope"></i>'
+		});
+		$("#endRegDate").datepicker({
+			showOn: "both", 
+			buttonText: '<i class="fa fa-calendar cal-btn-ahope"></i>'
+		});
+		$("#startPostDate").datepicker({
+			showOn: "both", 
+			buttonText: '<i class="fa fa-calendar cal-btn-ahope"></i>'
+		});
+		$("#endPostDate").datepicker({
+			showOn: "both", 
+			buttonText: '<i class="fa fa-calendar cal-btn-ahope"></i>'
+		});
+		
+		$('#search_btn').click(function(){
+			bindTable();
+		});
+	
+		$('#check_all').change(function(){
+			$('input:checkbox[name="faq_check"]').prop('checked', this.checked);
+		});
+		
+		$('#post_y_btn').click(function(){
+			updateFAQPost('Y');
+		});
+		
+		$('#post_n_btn').click(function(){
+			updateFAQPost('N');
+		});
+		
+		$('#delete_btn').click(function(){
+			deleteFAQ();
+		});
+		
+		$('#insert_btn').click(function(){
+			location.href = '${pageContext.request.contextPath}/admin/community/faq/insertFAQView';
+		});
+		
+	});
+	
+	//게시 상태 변경 이벤트
+	function updateFAQPost(postYn) {
+		
+		var url = '${pageContext.request.contextPath}/admin/community/faq/updateFAQPost';
+		var faqSeqStr = "";
+		var count = 0;
+		$('input:checkbox[name="faq_check"]:checked').each(function(idx){
+			if(idx > 0) {
+				faqSeqStr += "|"
+			}
+			++count;
+			faqSeqStr += $(this).val();
+		});
+		
+		if(count == 0) {
+			cAlert("FAQ를 선택해 주세요.");
+			return false;
+		} else {
+			var msg = "";
+			if(postYn == 'Y') msg = "건의 FAQ를 게시합니다.";
+			else msg = "건의 FAQ의 게시를 중지합니다.";
+			
+			cConfirm(count+msg, function(){
+				var data = 'postYn='+postYn+'&faqSeqStr='+faqSeqStr;
+				ajaxP(url, data, function (data) {
+					if(data.result == false) {
+						if(data.msg != '') {
+							cAlert(data.msg);
+						} else {
+							cAlert("게시 상태 변경에 실패하였습니다.");
+						}
+					} else {
+						cAlert("게시 상태 변경하였습니다.", function(){
+							bindTable();
+							$('#check_all').prop('checked', false);
+						});
+					}
+				});
+			});
+		} //if count
+	}
+	
+	//FAQ 삭제 이벤트
+	function deleteFAQ() {
+		
+		var url = '${pageContext.request.contextPath}/admin/community/faq/deleteFAQ';
+		var faqSeqStr = "";
+		
+		var count = 0;
+		$('input:checkbox[name="faq_check"]:checked').each(function(idx){
+			if(idx > 0) {
+				faqSeqStr += "|"
+			}
+			++count;
+			faqSeqStr += $(this).val();
+		});
+		
+		if(faqSeqStr == "") {
+			cAlert("FAQ를 선택해 주세요.");
+			return false;
+		} else {
+			var msg = "";
+			msg = "개 FAQ를 삭제합니다.";
+			
+			cConfirm(count+msg, function(){
+				
+				var data = 'faqSeqStr='+faqSeqStr;
+				ajaxP(url, data, function (data) {
+					if(data.result == false) {
+						if(data.msg != '') {
+							cAlert(data.msg);
+						} else {
+							cAlert("FAQ 삭제에 실패하였습니다.");
+						}
+					} else {
+						cAlert("FAQ를 삭제하였습니다.", function(){
+							bindTable();
+							$('#check_all').prop('checked', false);
+						});
+					}
+				});
+			});
+		}
+		
+	}
+	
+	var oTable;
+	function tableInit() {
+		oTable = $("#faq_list").dataTable({
+			"aoColumnDefs": [
+			                 	{
+				                	"sDefaultContent": "",
+				                	"aTargets": [ "_all" ]
+								}
+			               ],
+			"bLengthChange": true,
+   			"bFilter":false,
+   			"sPaginationType": "bootstrap",
+   			"order": [],
+   			"bLengthChange" : false,
+   			"bProcessing": true,
+   			"oLanguage": {
+				"sInfo" : "",
+				"sInfoEmpty" : ""
+			},
+   			"bServerSide": true,
+			"aoColumns": [
+					{"bSortable": false, "sClass": "center"},
+					{"bSortable": false, "sClass": "center"},
+					{ "mDataProp": "question", "bSortable": false, "sClass": "center" },
+					{ "mDataProp": "regDate", "bSortable": false, "sClass": "center" },
+					{ "mDataProp": "postDate", "bSortable": false, "sClass": "center" },
+					{ "mDataProp": "postYnStr", "bSortable": false, "sClass": "center" }
+			],
+			"sAjaxSource": "${pageContext.request.contextPath}/admin/community/faq/faqList" ,
+			"sServerMethod": "GET",
+			"fnServerParams": function ( aoData ) {
+				aoData.push( { "name":"startRegDate", "value":$("#startRegDate").val()} );
+				aoData.push( { "name":"endRegDate", "value":$("#endRegDate").val()} );
+				aoData.push( { "name":"startPostDate", "value":$("#startPostDate").val()} );
+				aoData.push( { "name":"endPostDate", "value":$("#endPostDate").val()} );
+				aoData.push( { "name":"question", "value":$("#question").val()} );
+				aoData.push( { "name":"postYn", "value":$("#postYn").val()} );
+			},
+			"fnDrawCallback": function( oSettings ) {
+			},
+			"fnCreatedRow": function (nRow, aData, iDataIndex) {
+				var totalCnt = oTable.fnSettings().fnRecordsTotal();
+				var startIndex = oTable.fnSettings()._iDisplayStart;
+				$(nRow).find('td').eq(1).html(totalCnt-(startIndex+iDataIndex));
+				$(nRow).find('td').eq(0).html('<input type="checkbox" name="faq_check" value="'+aData.faqSeq+'">');
+				
+				$(nRow).find('td:not(:first-child)').unbind("click").bind("click", function(){
+					$('#faqSeq').val(aData.faqSeq);
+					$('#frm').attr('action', '${pageContext.request.contextPath}/admin/community/faq/faqDetail').submit();
+				});
+			}
+		});
+	}
+	
+	function bindTable() {
+		oTable.fnDestroy();
+		tableInit();
+		oTable.fnSettings()._iDisplayStart = 0;
+	}
+</script>
+
+
+</head>
+<body>
+
+
+<form id="frm" name="frm" method="post" >
+	
+	<input type="hidden" id="faqSeq" name="faqSeq" value="">
+	
+	<!-- Title -->
+	<div class="row">
+		<div class="col-lg-12">
+			<h3 class="page-header page-header-ahope">커뮤니티 > FAQ</h3>
+			<h5 class="page-header page-header-desc-ahope">FAQ를 조회 관리합니다.</h5>
+		</div>
+	</div>
+
+	<!-- Main -->
+	<div class="row">
+		<div class="col-lg-12">
+		
+			<!-- Searchbox -->
+			<div id="filter-panel" class="filter-panel collapse in" style="height: auto;">
+				<div class="panel panel-default">
+					<div class="panel-body">
+						
+						<div class="navbar-form" role="search">
+							<label>등록일 : </label>
+							<div class="form-group search-cm-ahope">
+								<input type="text" id="startRegDate" name="startRegDate" class="form-control input-ahope-wd-sm">
+								-
+								<input type="text" id="endRegDate" name="endRegDate" class="form-control input-ahope-wd-sm">
+							</div>
+							
+							<label>게시일 : </label>
+							<div class="form-group search-cm-ahope">
+								<input type="text" id="startPostDate" name="startPostDate" class="form-control input-ahope-wd-sm">
+								-
+								<input type="text" id="endPostDate" name="endPostDate" class="form-control input-ahope-wd-sm">
+							</div>
+						</div>
+							
+						<div class="navbar-form navbar-left" role="search">
+							<label>질문 : </label>
+							<div class="form-group search-cm-ahope">
+								<input type="text" id="question" name="question" class="form-control" placeholder="Title">
+							</div>
+							
+							<label>상태 : </label>
+							<div class="form-group search-cm-ahope">
+								<select id="postYn" name="postYn" class="form-control">
+									<option value="">전체</option>
+									<option value="Y">게시중</option>
+									<option value="N">게시중지</option>
+								</select>
+							</div>
+						</div>
+							
+						<div class="navbar-form search-btn-ahope">
+							<button class="btn btn-ahope" type="button" id="search_btn" >
+								<i class="fa fa-search"></i> 검색
+							</button>
+						</div>
+
+					</div>
+				</div>
+			</div>		
+		
+			<div>
+				<div class="btn-left">
+					<button type="button" class="btn btn-info" id="post_y_btn">게시</button>
+					<button type="button" class="btn btn-primary" id="post_n_btn">게시중지</button>
+				</div>
+				<div class="btn-right">
+					<button type="button" class="btn btn-default" id="insert_btn">등록</button>
+					<button type="button" class="btn btn-ahope" id="delete_btn">삭제</button>
+				</div>
+			</div>
+			
+			<!-- list table -->
+			<table id="faq_list" class="table table-link-ahope">
+				<caption></caption>
+     			<!-- list table header -->
+				<thead id="sms-list-title" style="height:1px;">
+					<tr>
+						<th scope="col" style="width:5%"><input type="checkbox" id="check_all"></th>
+						<th scope="col" style="width:10%"><strong>No</strong></th>
+						<th scope="col" ><strong>제목</strong></th>
+						<th scope="col" style="width:20%"><strong>등록일</strong></th>
+						<th scope="col" style="width:20%"><strong>게시일</strong></th>
+						<th scope="col" style="width:10%"><strong>상태</strong></th>
+					</tr>
+				</thead>
+			</table>
+			
+		</div>
+	</div>
+	
+</form>
+</body>
+</html>

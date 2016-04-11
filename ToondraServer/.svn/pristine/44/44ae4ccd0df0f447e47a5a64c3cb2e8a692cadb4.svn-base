@@ -1,0 +1,25 @@
+package kr.co.toondra.web.content.dao;
+
+import java.util.HashMap;
+import java.util.List;
+
+import org.springframework.stereotype.Repository;
+
+import kr.co.toondra.base.dao.BaseDao;
+import kr.co.toondra.common.collection.PMap;
+
+@Repository
+public class ContentDao extends BaseDao{
+
+	public HashMap<String, Object> getWork(PMap pMap) {
+		return selectOne("Content.getWork", pMap);
+	}
+
+	public int getContentTotalCnt(PMap pMap) {
+		return selectOne("Content.contentTotalCnt");
+	}
+
+	public List<HashMap<String, Object>> getContentList(PMap pMap) {
+		return selectOne("Content.contentList", pMap);
+	}
+}

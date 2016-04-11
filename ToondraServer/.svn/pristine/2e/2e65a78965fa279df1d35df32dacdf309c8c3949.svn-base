@@ -1,0 +1,179 @@
+package kr.co.toondra.api.coin.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import kr.co.toondra.api.bean.Result;
+import kr.co.toondra.api.coin.dao.CoinDao;
+import kr.co.toondra.common.exception.LogicException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service("apiCoinService")
+public class CoinService {
+
+	@Autowired
+	private CoinDao dao;
+	
+	public Result getCoinMember(HashMap<String, Object> param) throws Exception{
+		
+		Result result = new Result();
+		
+		String memberSeq = dao.getMemberSeq((String)param.get("login_key"));
+		
+		if(memberSeq == null || memberSeq.equals("")) {
+			throw new LogicException("[Query] not found data { member_seq }", "402");
+		}
+		
+		param.put("member_seq", memberSeq);
+		
+		result.putObject("retention_coin", dao.getCoinMember(param));
+		
+		return result;
+	}
+	
+	public Result getCoinProduct(HashMap<String, Object> param) throws Exception{
+		
+		Result result = new Result();
+		
+		String memberSeq = dao.getMemberSeq((String)param.get("login_key"));
+
+		if(memberSeq == null || memberSeq.equals("")) {
+			throw new LogicException("[Query] not found data { member_seq }", "402");
+		}
+
+		param.put("member_seq", memberSeq);
+		
+		HashMap<String, Object> dataMap = new HashMap<String, Object>();
+		
+		dataMap.put("total_cnt", dao.getCoinProductTotalCnt());
+		result.setData(dataMap);
+		result.putObject("coin_product_list", dao.getCoinProduct(param));
+		
+		return result;
+	}
+	
+	
+	public Result getCoinPurchaseHistory(HashMap<String, Object> param) throws Exception{
+		
+		Result result = new Result();
+		
+		String memberSeq = dao.getMemberSeq((String)param.get("login_key"));
+		
+		if(memberSeq == null || memberSeq.equals("")) {
+			throw new LogicException("[Query] not found data { member_seq }", "402");
+		}
+		
+		param.put("member_seq", memberSeq);
+		
+		HashMap<String, Object> dataMap = new HashMap<String, Object>();
+		
+		dataMap.put("total_cnt", dao.getCoinHistoryTotalCnt(param));
+		result.setData(dataMap);
+		result.putObject("purchase_list", dao.getCoinPurchaseHistory(param));
+		
+		return result;
+	}
+	
+	
+	public Result insertCoinPurchaseReq(HashMap<String, Object> param) throws Exception{
+		
+		Result result = new Result();
+		
+		String memberSeq = dao.getMemberSeq((String)param.get("login_key"));
+
+		if(memberSeq == null || memberSeq.equals("")) {
+			throw new LogicException("[Query] not found data { member_seq }", "402");
+		}		
+		
+		HashMap<String, Object> coinProductInfo = new HashMap<String, Object>();
+		
+		coinProductInfo = dao.getCoinProductInfo(param);
+		
+		if(coinProductInfo == null || coinProductInfo.get("product_id") == null) {
+			throw new LogicException("[Query] not found data { product_id }", "402");
+		}
+		
+		coinProductInfo.put("member_seq", memberSeq);
+		
+		if(dao.insertCoinPurchase(coinProductInfo) != 1) {
+			throw new LogicException("[Query] insert fail { coin purchase req }", "403");
+		}
+		
+		
+		result.putObject("purchase_seq", coinProductInfo.get("purchase_seq"));
+		
+		return result;
+	}
+	
+	
+	public Result updateCoinPurchaseComplete(HashMap<String, Object> param) throws Exception {
+		
+		Result result = new Result();
+		
+		String memberSeq = dao.getMemberSeq((String)param.get("login_key"));
+		
+		if(memberSeq == null || memberSeq.equals("")) {
+			throw new LogicException("[Query] not found data { member_seq }", "402");
+		}
+		
+		param.put("member_seq", memberSeq);
+		
+		String state = (String) param.get("purchase_state");
+
+		if(dao.updateCoinPurchaseComplete(param) != 1 ) {
+			throw new LogicException("[Query] update fail { coin purchase complete }", "403");
+		}
+		
+		//구매 완료시 보유금액 추가
+		if((state).equals("0")) {
+			param.put("retention_coin", (dao.getCoinMember(param) + dao.getPurchaseCoin(param)));
+			
+			if(dao.updateMemberCoinAdd(param) != 1){
+				throw new LogicException("[Query] update fail { member coin add }", "403");
+			}
+		}
+		
+		return result;
+	}
+	
+	
+	public Result getCoinUsedHistory(HashMap<String, Object> param) throws Exception {
+		
+		Result result = new Result();
+				
+		List<HashMap<String, Object>> getCoinUsedList = new ArrayList<HashMap<String,Object>>();
+		
+		HashMap<String, Object> dataMap = new HashMap<String, Object>();
+		
+		//구매 컨텐츠 총 개수
+		int totalCnt = 0;
+		
+		String memberSeq = dao.getMemberSeq((String)param.get("login_key"));
+		
+		if(memberSeq == null || memberSeq.equals("")) {
+			throw new LogicException("[Query] not found data { member_seq }", "402");
+		}
+
+		param.put("member_seq", memberSeq);
+		
+		totalCnt = dao.getTotalCnt(param);
+		
+		getCoinUsedList = dao.getCoinUsedList(param);
+		
+		if(totalCnt != getCoinUsedList.size()) {
+			throw new LogicException("total cnt, coin used List cnt disagreement","408");
+		}
+		
+		dataMap.put("total_cnt", totalCnt);
+		dataMap.put("coin_used_list", getCoinUsedList);
+		
+		result.setData(dataMap);
+		
+		
+		return result;
+	}
+		
+}

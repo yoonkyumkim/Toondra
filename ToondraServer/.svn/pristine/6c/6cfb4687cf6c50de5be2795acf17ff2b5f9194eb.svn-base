@@ -1,0 +1,67 @@
+package kr.co.toondra.api.common;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.api.bean.Result;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.ModelAndView;
+
+public class BaseController {
+	
+	protected Logger logger = LoggerFactory.getLogger(this.getClass());
+	
+	protected final String JSON_VIEW = "jacksonView";
+	
+	@ExceptionHandler(Exception.class)
+	public ModelAndView exceptionHandler(HttpServletRequest request, Exception e) {
+		String errCode = "900";
+		String errName = e.getClass().getName();
+		
+		if(errName.equals("org.springframework.web.bind.MissingServletRequestParameterException")) {
+			errCode = "306";
+		} else if (errName.equals("java.lang.NullPointerException")) {
+			logger.error("can not found data");
+			errCode = "400";
+		}  else if (errName.equals("kr.co.toondra.common.exception.RuntimeLogicException")) {
+			logger.error("RuntimeLogicException");
+			errCode = "217";
+		} else if (errName.equals("org.springframework.beans.TypeMismatchException")) {
+			logger.error("type miss match");
+			errCode = "307";
+		} else if (errName.equals("java.lang.NumberFormatException")) {
+			logger.error("cast error String -> Integer");
+			errCode = "307";
+		} else if (errName.equals("java.lang.IOException")) {
+			logger.error("file error");
+			errCode = "500";
+		} else if (errName.equals("org.springframework.web.HttpMediaTypeNotSupportedException")) {
+			logger.error("not surppoted Content-Type");
+			errCode = "311";
+		} else if(errName.equals("org.springframework.jdbc.BadSqlGrammarException")) {
+			logger.error("query error");
+			errCode = "500";
+		} else if(errName.equals("org.springframework.web.client.ResourceAccessException")) {
+			logger.error("B/O return data type is not aplication/json");
+			errCode = "312";
+		} else if(errName.equals("java.lang.RuntimeException.RuntimeException")) {
+			logger.error("Runtime err");
+			errCode = "217";
+		} else {
+			logger.error(e.getMessage());
+		}
+		
+		ModelAndView mnv = new ModelAndView();
+		
+		Result result = new Result();
+		mnv.setViewName("jacksonView");
+		result.setResp_code(errCode);
+		
+		mnv.addObject("result", result);
+
+		return mnv;
+	}
+	
+}

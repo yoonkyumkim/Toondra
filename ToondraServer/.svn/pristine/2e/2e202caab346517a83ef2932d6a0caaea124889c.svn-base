@@ -1,0 +1,303 @@
+package kr.co.toondra.web.content.service;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.common.util.AESUtil;
+import kr.co.toondra.common.util.StringUtil;
+import kr.co.toondra.web.content.dao.ContentDao;
+
+@Service
+public class ContentService {
+	
+	@Value("${url.local}")
+	String URL;
+	
+	@Value("${file.root_path}")
+	String ROOT_PATH;
+	
+	@Autowired
+	ContentDao dao = new ContentDao();
+
+	public PMap getWork(PMap pMap) {
+		
+		HashMap<String, Object> workInfo = dao.getWork(pMap);
+		workInfo.put("thumbnail_img_url", URL+"/api/image/thumbnail/"+workInfo.get("work_seq"));
+		pMap.put("workInfo", workInfo);
+		return pMap;
+	}
+
+	public HashMap<String, Object> contentList(PMap pMap) {
+
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		
+		int totalcnt = dao.getContentTotalCnt(pMap);
+		List<HashMap<String, Object>> contentList = dao.getContentList(pMap);
+		if(contentList != null){
+			for(HashMap<String, Object> map : contentList) {
+				if(map.get("thumbnail_img_name").equals("")){
+					map.put("thumbnail_img_url", URL+"/api/image/thumbnail/"+map.get("work_seq"));
+				}else {
+					map.put("thumbnail_img_url", URL+"/api/image/content/thumbnail/" + map.get("content_seq"));
+				}
+			}
+		}
+		
+		result.put("iTotalRecords", totalcnt);
+		result.put("iTotalDisplayRecords", totalcnt);		
+		result.put("aaData", contentList);
+		
+		return result;
+	}
+
+	public PMap getWorkList(PMap pMap) {
+		
+		List<HashMap<String, Object>> authorList = dao.getAuthorList(pMap);
+		
+		pMap.put("authorList", authorList);
+		return pMap;
+	}
+
+	public PMap insertContent(PMap pMap) {
+		
+		MultipartHttpServletRequest mRequest = pMap.getMultipartRequest();
+		MultipartFile thumbnailFile = mRequest.getFile("thumbnail_img_name");
+		String fileName = Calendar.getInstance().getTimeInMillis() + "_" + thumbnailFile.getOriginalFilename();
+		String contentSeq = dao.getContentSeq(pMap).get("content_seq").toString();
+		String filePath = ROOT_PATH + "/" + pMap.getString("work_seq") + "/" + contentSeq + "/" + fileName;
+		File fileDir = new File(ROOT_PATH + "/" + pMap.getString("work_seq") + "/" + contentSeq);
+		fileDir.mkdir();
+		System.out.println(pMap);
+		if(thumbnailFile.getSize() > 0) {
+			File file = new File(filePath);
+			pMap.put("thumbnail_img_name", fileName);
+			pMap.put("thumbnail_img_path", filePath);
+				try {
+					thumbnailFile.transferTo(file);
+				} catch (IllegalStateException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			
+		} else {
+			pMap.put("thumbnail_img_name", "");
+			pMap.put("thumbnail_img_path", "");
+		}
+		if(pMap.getString("paid_yn").equals("Y")){
+			if(pMap.getString("coin").equals("0")){
+				pMap.put("coin", pMap.get("insert_coin"));
+			}
+		} else {
+			pMap.put("coin", "0");
+		}
+		
+		pMap.put("reg_manager_seq", pMap.getRequest().getSession().getAttribute("s_manager_seq"));
+		
+		String key = StringUtil.getRandomString(16);
+		AESUtil.setKey(key);
+		pMap.put("content_enc_key", key);
+		
+		dao.insertContent(pMap);
+		
+		
+		List<MultipartFile> contentFile = mRequest.getFiles("uploadFile");
+		for(int i = 0; i<contentFile.size(); i++ ) {
+			MultipartFile content = contentFile.get(i);
+			String contentName = Calendar.getInstance().getTimeInMillis() + "_" + content.getOriginalFilename();
+			String contentPath = ROOT_PATH + "/" + pMap.getString("work_seq") + "/" + contentSeq + "/" + contentName;
+			File contentDir = new File(ROOT_PATH + "/" + pMap.getString("work_seq") + "/" + contentSeq);
+			contentDir.mkdir();
+			byte[] fileArray = null;
+			try {
+				InputStream is = content.getInputStream();
+				ByteArrayOutputStream bo = new ByteArrayOutputStream();
+				int len = 0;
+				byte[] buf = new byte[1024];
+				while((len = is.read(buf)) != -1){
+					bo.write(buf, 0, len);
+					bo.flush();
+				}
+				fileArray = bo.toByteArray();
+				fileArray = AESUtil.EncryptByteArray(fileArray);
+				
+				File file = new File(contentPath);
+				
+				FileOutputStream fo = new FileOutputStream(file);
+				fo.write(fileArray);
+				fo.flush();
+				fo.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			pMap.put("content_seq", contentSeq);
+			pMap.put("content_file_order", i);
+			pMap.put("content_file_name", contentName);
+			pMap.put("content_file_path", contentPath);
+			dao.insertContentFile(pMap);
+			dao.insertPush(pMap);
+		}
+		
+		pMap.put("result", "success");
+		return pMap;
+	}
+	public int updateContentService(PMap pMap) {
+		
+		HttpSession session = pMap.getRequest().getSession();
+		pMap.put("upt_manager_seq", session.getAttribute("s_manager_seq"));
+		
+		List<String> contentSeqList = Arrays.asList(pMap.getString("contentSeqStr").split("\\|"));
+		pMap.put("list", contentSeqList);
+		return dao.updateContentState(pMap);
+	}
+	
+	public int deleteContent(PMap pMap) throws Exception {
+		
+		HttpSession session = pMap.getRequest().getSession();
+		pMap.put("upt_manager_seq", session.getAttribute("s_manager_seq"));
+
+		List<String> contentSeqList = Arrays.asList(pMap.getString("contentSeqStr").split("\\|"));
+		pMap.put("list", contentSeqList);
+		
+		return dao.deleteContent(pMap);
+	}
+
+	public PMap getContent(PMap pMap) {
+		
+		List<HashMap<String, Object>> authorList = dao.getAuthorList(pMap);
+		pMap.put("authorList", authorList);
+		
+		HashMap<String,Object> map = dao.getContent(pMap);
+		if(!map.get("thumbnail_img_name").equals("")){
+			map.put("thumbnail_img_url", URL+"/api/image/content/thumbnail/" +map.get("content_seq"));
+		}
+		pMap.put("contentInfo", map);
+		
+		List<HashMap<String, Object>> contentFile = dao.getContentFile(pMap);
+		pMap.put("contentFile", contentFile);
+
+		
+		return pMap;
+	}
+
+	public PMap updateContent(PMap pMap) {
+		String delFileList[] = pMap.getRequest().getParameterValues("del_content_file");
+		
+		HttpSession session = pMap.getRequest().getSession();
+		pMap.put("upt_manager_seq", session.getAttribute("s_manager_seq"));
+		if(pMap.getString("paid_yn").equals("Y")){
+			if(pMap.getString("coin").equals("0")){
+				pMap.put("coin", pMap.get("insert_coin"));
+			}
+		} else {
+			pMap.put("coin", "0");
+		}
+		MultipartHttpServletRequest mRequest = pMap.getMultipartRequest();
+		MultipartFile thumbnailFile = mRequest.getFile("thumbnail_img_name");
+		String fileName = Calendar.getInstance().getTimeInMillis() + "_" + thumbnailFile.getOriginalFilename();
+		String filePath = ROOT_PATH + "/" + pMap.get("work_seq") + "/" + pMap.get("content_seq") + "/" + fileName;
+		String beforeThumbnail = pMap.getString("before_thumbnail_img_name");
+		String beforeThumbnailFilePath = ROOT_PATH + "/" +pMap.get("work_seq")+ "/" + pMap.get("content_seq") + "/" + beforeThumbnail;
+		if(thumbnailFile.getSize() > 0) {
+			File beforeFile = new File(beforeThumbnailFilePath);
+			beforeFile.delete();
+			File file = new File(filePath);
+			pMap.put("thumbnail_img_name", fileName);
+			pMap.put("thumbnail_img_path", filePath);
+				try {
+					thumbnailFile.transferTo(file);
+				} catch (IllegalStateException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+		} else {
+			pMap.put("thumbnail_img_name", "");
+			pMap.put("thumbnail_img_path", "");
+		}
+		dao.updateContent(pMap);
+		
+		HashMap<String, Object> map = new HashMap<String, Object>();
+		for(int i = 0; i < delFileList.length; i++) {
+			if(!delFileList[i].equals("")){
+				map.put("content_file_seq", delFileList[i]);
+				HashMap<String,Object> fileMap = dao.getContentFilePath(map);
+				File delContentFile = new File((String) fileMap.get("content_file_path"));
+				delContentFile.delete();
+				dao.deleteContentFile(map);
+			}
+		}
+		map = dao.getContentKey(pMap);
+		String key = map.get("content_enc_key").toString();
+		AESUtil.setKey(key);
+		
+		List<MultipartFile> contentFile = mRequest.getFiles("uploadFile");
+		for(int i = 0; i<contentFile.size(); i++ ) {
+			MultipartFile content = contentFile.get(i);
+			String contentName = Calendar.getInstance().getTimeInMillis() + "_" + content.getOriginalFilename();
+			String contentPath = ROOT_PATH + "/" + pMap.getString("work_seq") + "/" + pMap.get("content_seq") + "/" + contentName;
+			byte[] fileArray = null;
+			ByteArrayOutputStream bo = null;
+			InputStream is = null;
+			FileOutputStream fo = null;
+			try {
+				is = content.getInputStream();
+				bo = new ByteArrayOutputStream();
+				int len = 0;
+				byte[] buf = new byte[1024];
+				while((len = is.read(buf)) != -1){
+					bo.write(buf, 0, len);
+					bo.flush();
+				}
+				fileArray = bo.toByteArray();
+				fileArray = AESUtil.EncryptByteArray(fileArray);
+				
+				File file = new File(contentPath);
+				
+				fo = new FileOutputStream(file);
+				fo.write(fileArray);
+				fo.flush();
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					if(fo != null) fo.close();
+					if(bo != null) bo.close();
+					if(is != null) is.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			pMap.put("content_file_order", i);
+			pMap.put("content_file_name", contentName);
+			pMap.put("content_file_path", contentPath);
+			dao.insertContentFile(pMap);
+			
+		}
+		pMap.put("result", "success");
+		return pMap;
+	}
+
+
+}

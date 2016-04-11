@@ -1,0 +1,26 @@
+package kr.co.toondra.api.community.service;
+
+import java.util.HashMap;
+
+import kr.co.toondra.api.bean.Result;
+import kr.co.toondra.api.community.dao.FAQDao;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service("apiFAQService")
+public class FAQService {
+
+	@Autowired
+	private FAQDao dao;
+
+	public Result getFAQList(HashMap<String, Object> param) {
+
+		Result result = new Result();
+		result.putObject("total_cnt", dao.getFAQListCount(param));
+		result.putObject("notice_list", dao.getFAQList(param));
+		
+		return result;
+	}
+
+}

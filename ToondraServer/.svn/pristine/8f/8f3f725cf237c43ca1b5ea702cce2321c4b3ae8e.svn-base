@@ -1,0 +1,35 @@
+package kr.co.toondra.common.util;
+
+import java.util.HashMap;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+public class SessionUtil {
+
+	private static HashMap<String, Object> sessionMap = new HashMap<String, Object>();
+	
+	public static void setSession(HttpServletRequest request, String key, String value) {
+		HttpSession session = request.getSession();
+		session.setAttribute(key, value);
+	}
+	
+	public String getSession(HttpServletRequest request, String key) {
+		HttpSession session = request.getSession();
+		return (String) session.getAttribute(key);
+	}
+	
+	public static void getInvalidate(HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		session.invalidate();
+	}
+	
+	public static void setAttribute(String key, Object value) {
+		sessionMap.put(key, value);
+	}
+	
+	public static Object getAttribute(String key) {
+		return sessionMap.get(key);
+	}
+	
+}

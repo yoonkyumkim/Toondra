@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="API.FAQ">
+
+  	<sql id="faqWhere">
+    	WHERE	faq.reg_manager_seq = manager.manager_seq
+    	AND		post_yn = 'Y'
+    </sql>
+    
+    <select id="getFAQListCount" parameterType="hashmap" resultType="integer">
+        SELECT	COUNT(faq.faq_seq)
+        FROM 	tb_faq faq
+        		,tb_manager manager
+        <include refid="faqWhere"/>
+    </select>
+    
+    <select id="getFAQList" parameterType="hashmap" resultType="hashmap">
+    	SELECT	faq.faq_seq			AS "faq_seq"
+    			,faq.question		AS "question"
+    			,faq.answer			AS "answer"
+    			,faq.post_yn		AS "post_yn"
+    			,DATE_FORMAT(faq.reg_date, '%Y-%m-%d %H:%i:%s')	AS "reg_date"
+    	FROM	tb_faq faq
+        		,tb_manager manager
+        <include refid="faqWhere"/>
+    	ORDER BY faq.faq_seq desc
+    </select>
+    
+</mapper>

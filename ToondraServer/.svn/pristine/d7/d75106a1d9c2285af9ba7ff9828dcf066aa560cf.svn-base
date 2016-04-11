@@ -1,0 +1,4 @@
+jdbc.driver=com.mysql.jdbc.Driver
+jdbc.url=jdbc:mysql://172.16.0.155/GetTogether
+jdbc.user=together
+jdbc.password=dkghq99

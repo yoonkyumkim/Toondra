@@ -1,0 +1,113 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=EUC-KR">
+		<title>로그인</title>
+	</head>
+	
+	
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css">
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/login.css">
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/ahope.css">
+	
+	<script type="text/javascript" src="${pageContext.request.contextPath}/resources/js/jquery-1.11.2.min.js"></script>
+    <script type="text/javascript" src="${pageContext.request.contextPath}/resources/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="${pageContext.request.contextPath}/resources/js/cookie.js"></script>
+    
+	<script type="text/javascript">
+	function login(){
+		if($("#id").val() == "") {
+			alert("아이디를 입력하세요");
+			return;
+		}
+		if($("#password").val() == "") {
+			alert("비밀번호를 입력하세요");
+			return;
+		}
+		saveId();
+		
+		var form = document.getElementById("loginForm");
+		form.submit();
+	}
+	
+	$(document).ready(function(){
+		if("${result}"=="false"){
+			alert("아이디 또는 비밀번호가 틀립니다.");
+		}
+		getLogin();
+		
+	});
+	
+	
+	function logout() {
+		location.href="${pageContext.request.contextPath}/admin/login/logout"
+	}
+	
+	  function setsave(name, value, expiredays) {
+	        var today = new Date();
+	        today.setDate(today.getDate() + expiredays);
+	        document.cookie = name + "=" + escape(value) + "; path=/; expires="
+	                + today.toGMTString() + ";";
+	        
+	    }
+	    
+	    function saveId(){
+	        if (document.getElementById("idSaveCheck").checked) {
+	            saveLogin(document.getElementById("id").value);
+	        } else {
+	            saveLogin("");
+	        }
+	    }
+
+	    function saveLogin(id) {
+	        if (id != "") {
+	            // userid 쿠키에 id 값을 7일간 저장
+	            setsave("id", id, 7);
+	        } else {
+	            // userid 쿠키 삭제
+	            setsave("id", id, -1);
+	        }
+	    }
+	    
+	    function getLogin() {
+	        
+	        var cook = document.cookie + ";";
+	        var idx = cook.indexOf("id", 0);
+	        var val = "";
+
+	        if (idx != -1) {
+	            cook = cook.substring(idx, cook.length);
+	            begin = cook.indexOf("=", 0) + 1;
+	            end = cook.indexOf(";", begin);
+	            val = unescape(cook.substring(begin, end));
+	        }
+
+	        if (val != "") {
+	            document.getElementById("id").value = val;
+	            document.getElementById("idSaveCheck").checked = true;
+	        }
+	    }
+	
+	</script>
+<body>
+	
+	<div class="login-bg">
+		<div class="container">
+		
+			<form class="form-signin" id="loginForm" method="post" action="${pageContext.request.contextPath }/admin/login/loginDo">
+				<h1 class="form-signin-heading login-title-ahope">Toondra Admin</h1>
+				<input type="text" class="form-control" name="id" id="id" placeholder="id" autofocus="">
+				<input type="password" class="form-control" name="password" id="password" placeholder="password" >
+				<input type="button" class="btn btn-lg btn-ahope btn-block" onclick="login()" value="Log In">
+				<div class="login-save-id">
+					<input type="checkbox" id="idSaveCheck" > SAVE ID
+				</div>
+			</form>
+		
+		</div>
+	</div>
+
+</body>
+</html>

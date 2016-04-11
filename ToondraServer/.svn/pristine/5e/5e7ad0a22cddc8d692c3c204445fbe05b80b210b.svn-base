@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="Member">
+    
+    <sql id="memberWhere">
+    	WHERE	1 = 1
+    	<if test='searchParam != null and searchParam != ""'>
+    	AND		email LIKE CONCAT('%',#{searchParam},'%')
+    	</if>
+    </sql>
+    
+    <select id="getMemberListCount" parameterType="hashmap" resultType="integer">
+        SELECT	COUNT(member_seq)
+        FROM 	tb_member
+        <include refid="memberWhere"/>
+    </select>
+    
+    <select id="getMemberList" parameterType="hashmap" resultType="hashmap">
+    	SELECT	member_seq	AS "memberSeq"
+    			,email		AS "email"
+    			,cert_state	AS "cert_state"
+    			,reg_date	AS "regDate"
+    	FROM	tb_member
+        <include refid="memberWhere"/>
+    	ORDER BY member_seq desc
+		<if test="iDisplayStart != null and iDisplayLength != null">
+		LIMIT 	#{iDisplayStart}, #{iDisplayLength}
+		</if>
+    </select>
+    
+</mapper>

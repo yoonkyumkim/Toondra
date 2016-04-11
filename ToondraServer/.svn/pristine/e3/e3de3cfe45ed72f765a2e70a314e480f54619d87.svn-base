@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<decorators defaultdir="/WEB-INF/views/">
+	
+	<!-- 제외 -->
+	<excludes>
+		<pattern>/login/**</pattern>
+	</excludes>
+	
+	
+	    
+    <decorator name="home_layout" page="toondra/login/loginView.jsp">
+		<pattern>/</pattern>
+    </decorator>
+    
+	<decorator name="layout" page="layout/layout.jsp">
+		<pattern>/*</pattern>
+	</decorator>
+</decorators>
+

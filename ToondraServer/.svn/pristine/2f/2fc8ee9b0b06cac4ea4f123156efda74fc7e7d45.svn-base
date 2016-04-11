@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="Push">
+
+  	<sql id="pushWhere">
+    	WHERE	push.reg_manager_seq = manager.manager_seq
+    	<choose>
+    		<when test='startRegDate != "" and endRegDate == ""'>
+		  		<![CDATA[
+	    			AND	push.reg_date >= STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startRegDate == "" and endRegDate != ""'>
+    			<![CDATA[
+	    			AND	push.reg_date <= STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startRegDate != "" and endRegDate != ""'>
+				AND push.reg_date 
+					BEETWEEN STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+					AND STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+    		</when>
+    	</choose>
+    	<choose>
+    		<when test='startSendDate != "" and startSendDate == ""'>
+		  		<![CDATA[
+	    			AND	push.send_datetime >= STR_TO_DATE(CONCAT(#{startSendDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startSendDate == "" and startSendDate != ""'>
+    			<![CDATA[
+	    			AND	push.send_datetime <= STR_TO_DATE(CONCAT(#{startSendDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startSendDate != "" and startSendDate != ""'>
+				AND push.send_datetime
+					BEETWEEN STR_TO_DATE(CONCAT(#{startSendDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+					AND STR_TO_DATE(CONCAT(#{startSendDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+    		</when>
+    	</choose>
+    	
+    	<if test='title != null and title != ""'>
+    	AND		push.title LIKE CONCAT('%',#{title},'%')
+    	</if>
+    </sql>
+    
+    <select id="getPushListCount" parameterType="hashmap" resultType="integer">
+        SELECT	COUNT(push.push_seq)
+        FROM 	tb_push_send push
+        		,tb_manager manager
+        <include refid="pushWhere"/>
+    </select>
+    
+    <select id="getPushList" parameterType="hashmap" resultType="hashmap">
+    	SELECT	push.push_seq	AS "pushSeq"
+    			,push.title		AS "title"
+    			,push.content		AS "content"
+    			,push.reg_manager_seq AS "managerSeq"
+    			,manager.id			AS "id"
+    			,push.send_state	AS "sendState"
+    			,(	CASE push.send_state
+	    				WHEN '00' THEN '대기'
+	    				WHEN '00' THEN '발송중'
+	    				WHEN '00' THEN '완료'
+	    				WHEN '00' THEN '실패'
+	    				ELSE ''
+	    			END) AS "sendStateStr"
+    			,DATE_FORMAT(push.reg_date, '%Y-%m-%d %H:%i:%s')	AS "regDate"
+    			,DATE_FORMAT(push.send_datetime, '%Y-%m-%d %H:%i:%s')	AS "sendDateTime"
+    	FROM	tb_push_send push
+        		,tb_manager manager
+        <include refid="pushWhere"/>
+    	ORDER BY push.push_seq desc
+		<if test="iDisplayStart != null and iDisplayLength != null">
+		LIMIT 	#{iDisplayStart}, #{iDisplayLength}
+		</if>
+    </select>
+    
+    <select id="getPush" parameterType="hashmap" resultType="hashmap">
+    	SELECT	push.push_seq	AS "pushSeq"
+    			,push.title		AS "title"
+    			,push.content		AS "content"
+    			,push.post_yn		AS "postYn"
+    			,push.reg_manager_seq AS "managerSeq"
+    			,manager.id			AS "id"
+    			,DATE_FORMAT(push.reg_date, '%Y-%m-%d %H:%i:%s')	AS "regDate"
+    			,DATE_FORMAT(push.send_datetime, '%Y-%m-%d %H:%i:%s')	AS "sendDateTime"
+    			,DATE_FORMAT(push.send_datetime, '%Y-%m-%d')	AS "sendDate"
+    			,DATE_FORMAT(push.send_datetime, '%H')	AS "sendHH"
+    			,DATE_FORMAT(push.send_datetime, '%i')	AS "sendMM"
+    	FROM	tb_push_send push
+        		,tb_manager manager
+        WHERE	push.reg_manager_seq = manager.manager_seq
+        AND		push.push_seq = #{pushSeq}
+    </select>
+    
+    <insert id="insertPush" parameterType="hashmap">
+    	INSERT INTO	tb_push_send
+    				(
+    				title
+    				,content
+    				,type
+    				,send_state
+    				,send_datetime
+    				,reg_manager_seq
+    				,reg_date
+    				)
+    	VALUES		(
+    				#{title}
+    				,#{content}
+    				,#{type}
+    				,#{sendState}
+    				,STR_TO_DATE(#{sendDateTime}, '%Y-%m-%d %H:%i:%s')
+    				,#{managerSeq}
+    				,NOW()
+    				)
+    </insert>
+    
+    <update id="updatePush" parameterType="hashmap">
+    	UPDATE	tb_push_send
+    	SET		title 		= #{title}
+    			,content 	= #{content}
+    			,post_yn 	= #{postYn}
+		<choose>
+			<when test='postYn == "Y"'>
+				,post_date 	= (IF(post_date IS NULL, NOW(), post_Date))
+			</when>
+			<otherwise>
+				,post_date 	= null
+			</otherwise>
+		</choose>
+    			,upt_manager_seq = #{managerSeq}
+    	WHERE	push_seq = #{pushSeq}
+    </update>
+    
+	<delete id="deletePush" parameterType="list">
+		DELETE
+		FROM	tb_push_send
+		WHERE	push_seq IN
+		<foreach collection="list" item="push" index="index" separator="," open="(" close=")">
+           #{push}
+        </foreach>
+	</delete>    
+
+	<update id="updatePushPost" parameterType="hashmap">
+		UPDATE	tb_push_send
+		SET		post_yn = #{postYn}
+		<choose>
+			<when test='postYn == "Y"'>
+				,post_date = (IF(post_date IS NULL, NOW(), post_Date))
+			</when>
+			<otherwise>
+				,post_date = null
+			</otherwise>
+		</choose>
+		WHERE	push_seq IN
+		<foreach collection="list" item="push" index="index" separator="," open="(" close=")">
+           #{push}
+        </foreach>
+	</update>
+
+</mapper>

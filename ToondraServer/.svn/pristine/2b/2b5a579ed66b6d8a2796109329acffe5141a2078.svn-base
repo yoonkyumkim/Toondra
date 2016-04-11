@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="Work">
+    
+    <sql id="workWhere">
+        <choose>
+    		<when test='startRegDate != "" and endRegDate == ""'>
+		  		<![CDATA[
+	    			AND	tw.reg_date >= STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startRegDate == "" and endRegDate != ""'>
+    			<![CDATA[
+	    			AND	tw.reg_date <= STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startRegDate != "" and endRegDate != ""'>
+				AND tw.reg_date 
+					BEETWEEN STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+					AND STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+    		</when>
+    	</choose>
+        <if test='gubun == "work_name"'>
+            <if test='search_param != null and search_param != ""' >
+            	AND (work_name LIKE CONCAT('%',#{search_param},'%'))
+        	</if>
+        </if>
+        <if test='gubun == "author_name"'>
+            <if test='search_param != null and search_param != ""' >
+            	AND (author_name LIKE CONCAT('%',#{search_param},'%'))
+        	</if>
+        </if>
+        <if test='fin_yn != null and fin_yn != ""'>
+    		AND	tw.fin_yn = #{fin_yn}
+    	</if>
+    	 <if test='day != null and day != ""'>
+    		AND	td.days LIKE CONCAT('%',#{day},'%')
+    	</if>
+    	 <if test='genre_seq != null and genre_seq != ""'>
+    		AND tg.genre_seq LIKE CONCAT('%',#{genre_seq},'%')
+    	</if>
+    	 <if test='service_state != null and service_state != ""'>
+    		AND	tw.service_state = #{service_state}
+    	</if>
+    </sql>
+    
+    <select id="searchAuthor" parameterType="hashmap" resultType="hashmap">
+        SELECT author_name
+        	,author_id
+        	,author_seq
+		FROM tb_author
+		WHERE author_id LIKE CONCAT('%',#{author_id},'%')
+    </select>
+    
+    <select id="genreList"  resultType="hashmap">
+        SELECT genre_name
+        	,genre_seq
+		FROM tb_genre;
+    </select>
+    <select id="getWorkSeq" resultType="hashmap">
+        SELECT AUTO_INCREMENT AS work_seq
+		FROM information_schema.TABLES
+		WHERE TABLE_SCHEMA = "toondra"
+		AND table_name = "tb_work"
+    </select>
+    <insert id="insertWork" parameterType="hashmap" >
+        INSERT INTO tb_work
+			(work_name
+			,work_desc
+			<if test='fin_yn != null and fin_yn != ""' >
+				,fin_yn
+        	</if>
+			,thumbnail_img_name
+			,thumbnail_img_path
+			,reg_manager_seq
+			,reg_date)
+		VALUES (#{work_name}
+			,#{work_desc}
+			<if test='fin_yn != null and fin_yn != ""' >
+				,#{fin_yn}
+        	</if>
+			,#{thumbnail_img_name}
+			,#{thumbnail_img_path}
+			,#{reg_manager_seq}
+			,CURRENT_TIMESTAMP);
+    </insert>
+    
+    <insert id="insertWorkAuthor" parameterType="hashmap">
+        INSERT INTO tb_work_author
+				(work_seq
+				,author_seq)
+		VALUES (#{work_seq}
+			,#{author_seq})
+    </insert>
+    <insert id="insertDay" parameterType="hashmap" >
+        INSERT INTO tb_work_day
+        		(work_seq
+        		,day)
+        VALUES (#{work_seq}
+        		,#{day})
+    </insert>
+    
+    <insert id="insertWorkGenre" parameterType="hashmap" >
+        INSERT INTO tb_work_genre
+        		(work_seq
+        		,genre_seq)
+        VALUES (#{work_seq}
+        		,#{genre_seq})
+    </insert>
+    
+     <select id="workTotalCnt" resultType="Integer" parameterType="hashmap">
+        SELECT COUNT(work_seq)
+        FROM (
+        SELECT  tw.work_seq
+		FROM tb_work tw INNER JOIN tb_work_author twa
+				ON tw.work_seq = twa.work_seq
+				LEFT OUTER JOIN tb_author ta
+				ON twa.author_seq = ta.author_seq
+				INNER JOIN (SELECT twg.work_seq AS work_seq, GROUP_CONCAT(tg.genre_name) AS genre_name
+									,GROUP_CONCAT(tg.`genre_seq`) AS genre_seq
+					   FROM tb_genre tg INNER JOIN tb_work_genre twg
+							    ON tg.genre_seq = twg.genre_seq
+					   GROUP BY twg.work_seq) tg
+				ON tg.work_seq = tw.work_seq
+				LEFT OUTER JOIN (SELECT twd.work_seq AS work_seq,GROUP_CONCAT(twd.day) AS days
+					   FROM tb_work tw INNER JOIN tb_work_day twd
+							   ON tw.work_seq = twd.work_seq
+					   GROUP BY twd.work_seq) td
+				ON td.work_seq = tw.work_seq
+		WHERE tw.del_yn = 'N'
+		<include refid="workWhere"/>
+		GROUP BY tw.work_seq
+		) A
+    </select>
+    
+    <select id="workList" resultType="hashmap" parameterType="hashmap">
+        SELECT  tw.work_seq AS work_seq
+			,tw.work_name AS work_name
+			,GROUP_CONCAT(ta.author_name) AS author_name
+			,tg.genre_seq
+			,tg.genre_name AS genre_name
+			,td.days AS day
+			,tw.fin_yn AS fin_yn
+			,IFNULL(DATE_FORMAT(tw.reg_date, '%Y-%m-%d'), ' ') AS reg_date
+			,tw.service_state AS service_state
+		FROM tb_work tw INNER JOIN tb_work_author twa
+				ON tw.work_seq = twa.work_seq
+				LEFT OUTER JOIN tb_author ta
+				ON twa.author_seq = ta.author_seq
+				INNER JOIN (SELECT twg.work_seq AS work_seq, GROUP_CONCAT(tg.genre_name) AS genre_name
+									,GROUP_CONCAT(tg.`genre_seq`) AS genre_seq
+					   FROM tb_genre tg INNER JOIN tb_work_genre twg
+							    ON tg.genre_seq = twg.genre_seq
+					   GROUP BY twg.work_seq) tg
+				ON tg.work_seq = tw.work_seq
+				LEFT OUTER JOIN (SELECT twd.work_seq AS work_seq,GROUP_CONCAT(twd.day) AS days
+					   FROM tb_work tw INNER JOIN tb_work_day twd
+							   ON tw.work_seq = twd.work_seq
+					   GROUP BY twd.work_seq) td
+				ON td.work_seq = tw.work_seq
+		WHERE tw.del_yn = 'N'
+		<include refid="workWhere"/>
+		GROUP BY tw.work_seq
+		ORDER BY tw.reg_date DESC
+		LIMIT #{iDisplayStart}, #{iDisplayLength}
+    </select>
+    
+    <update id="updateWorkState" parameterType="hashmap">
+		UPDATE	tb_work
+		SET		service_state = #{service_state}
+				,upt_manager_seq = #{upt_manager_seq}
+    			,upt_date = NOW()
+		WHERE	work_seq IN
+		<foreach collection="list" item="work" index="index" separator="," open="(" close=")">
+           #{work}
+        </foreach>
+	</update>
+	
+    <update id="deleteWork" parameterType="hashmap">
+		UPDATE	tb_work
+		SET		del_yn = 'Y'
+				,upt_manager_seq = #{upt_manager_seq}
+    			,upt_date = NOW()
+		WHERE	work_seq IN
+		<foreach collection="list" item="work" index="index" separator="," open="(" close=")">
+           #{work}
+        </foreach>
+	</update>  
+	
+    <select id="getWork" parameterType="hashmap" resultType="hashmap">
+        SELECT work_name
+			,work_desc
+			,thumbnail_img_name
+			,fin_yn
+			,work_seq
+		FROM tb_work
+		WHERE work_seq = #{work_seq}; 
+    </select>
+    
+    <select id="getDay" parameterType="hashmap" resultType="hashmap">
+        SELECT day
+		FROM tb_work_day
+		WHERE work_seq = #{work_seq};
+    </select>
+    
+    <select id="getGenre" parameterType="hashmap" resultType="hashmap">
+        SELECT genre_seq
+		FROM tb_work_genre
+		WHERE work_seq = #{work_seq};
+    </select>
+    <select id="getAuthor" parameterType="hashmap" resultType="hashmap">
+        SELECT ta.author_id
+			,ta.author_name
+			,ta.author_seq
+		FROM tb_author ta INNER JOIN tb_work_author twa
+				  ON ta.author_seq = twa.author_seq
+		WHERE twa.work_seq = #{work_seq};
+    </select>
+    
+    <delete id="deleteWorkAuthor" parameterType="hashmap">
+        DELETE FROM tb_work_author
+        WHERE   work_seq = #{work_seq}
+        AND		author_seq = #{author_seq}
+    </delete>
+    <update id="updateWorkAuthor" parameterType="hashmap">
+        UPDATE tb_work_author
+        SET 	author_seq = #{author_seq}
+        WHERE  author_seq = #{before_author_seq}
+        AND		work_seq = #{work_seq}
+    </update>
+    <delete id="delWorkGenre" parameterType="hashmap">
+        DELETE FROM tb_work_genre
+        WHERE work_seq = #{work_seq}
+        AND genre_seq = #{genre_seq}
+    </delete>
+    <update id="updateWorkGenre" parameterType="hashmap">
+        UPDATE tb_work_genre
+        SET 	genre_seq = #{genre_seq}
+        WHERE  genre_seq = #{before_genre_seq}
+        AND 	work_seq = #{work_seq}
+    </update>
+    <update id="updateWork" parameterType="hashmap" >
+        UPDATE tb_work
+        SET work_name = #{work_name }
+        	,work_desc = #{work_desc }
+       	<if test='fin_yn != null and fin_yn != ""' >
+        	,fin_yn = #{fin_yn}
+       	</if>
+       	<if test='fin_yn == null or fin_yn == ""' >
+        	,fin_yn = 'N'
+       	</if>
+       	<if test="thumbnail_img_name != null and thumbnail_img_name != ''" >
+        	,thumbnail_img_name = #{thumbnail_img_name }
+        	,thumbnail_img_path = #{thumbnail_img_path }
+       	</if>
+        	,upt_manager_seq = #{upt_manager_seq }
+        WHERE work_seq = #{ work_seq}
+    </update>
+    <delete id="deleteDay" parameterType="hashmap">
+        DELETE FROM tb_work_day
+        WHERE work_seq = #{work_seq}
+    </delete>
+    
+</mapper>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="API.Work">
+
+ 	<sql id="workWhere">
+               <if test='gubun == "work_name"'>
+            <if test='searchParam != null and searchParam != ""' >
+            	AND (work_name LIKE CONCAT('%',#{searchParam},'%'))
+        	</if>
+        </if>
+        <if test='gubun == "author_name"'>
+            <if test='searchParam != null and searchParam != ""' >
+            	AND (author_name LIKE CONCAT('%',#{searchParam},'%'))
+        	</if>
+        </if>
+        <if test='fin_yn != null and fin_yn != ""'>
+    		AND	tw.fin_yn = #{fin_yn}
+    	</if>
+    	 <if test='day != null and day != ""'>
+    		AND	td.days LIKE CONCAT('%',#{day},'%')
+    	</if>
+    	 <if test='genre_seq != null and genre_seq != ""'>
+    		AND tg.genre_seq LIKE CONCAT('%',#{genre_seq},'%')
+    	</if>
+    	 <if test='service_state != null and service_state != ""'>
+    		AND	tw.service_state = #{service_state}
+    	</if>
+    	<if test='last_update_date != null and last_update_date != ""'>
+    		<![CDATA[
+	    			AND	tw.upt_date >= STR_TO_DATE(CONCAT(#{last_update_date},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+    		]]>
+    	</if>
+    </sql>
+
+ 	<select id="workList" resultType="hashmap" parameterType="hashmap">
+	 	SELECT  
+	 			tw.work_seq AS work_seq
+				, tw.work_name AS work_name
+				, tw.work_desc AS work_desc
+				, tw.thumbnail_img_path AS thumbnail_img_path
+				, GROUP_CONCAT(ta.author_name) AS author_name
+				, tg.genre_seq AS genre_seq
+				, tg.genre_name AS genre_name
+				, IFNULL(REPLACE(td.days, ',', '-'), "") AS day
+				, tw.fin_yn AS fin_yn
+				, IFNULL(DATE_FORMAT(tw.reg_date, '%Y-%m-%d'), ' ') AS reg_date
+				, IFNULL(DATE_FORMAT(tw.upt_date, '%Y-%m-%d'), ' ') AS upt_date
+				, tw.service_state AS service_state
+				, tw.del_yn AS del_yn
+		
+		FROM tb_work tw INNER JOIN tb_work_author twa
+					ON tw.work_seq = twa.work_seq
+					LEFT OUTER JOIN tb_author ta
+					ON twa.author_seq = ta.author_seq
+					INNER JOIN (SELECT 
+										twg.work_seq AS work_seq
+										, GROUP_CONCAT(tg.genre_name) AS genre_name
+										,GROUP_CONCAT(tg.`genre_seq`) AS genre_seq
+										
+						  		FROM tb_genre tg INNER JOIN tb_work_genre twg ON tg.genre_seq = twg.genre_seq
+						   GROUP BY twg.work_seq) tg
+						   
+					ON tg.work_seq = tw.work_seq
+					
+					LEFT OUTER JOIN (SELECT 
+											twd.work_seq AS work_seq
+											, GROUP_CONCAT(twd.day) AS days
+						   			
+						   			FROM tb_work tw INNER JOIN tb_work_day twd ON tw.work_seq = twd.work_seq
+						   GROUP BY twd.work_seq) td
+						   
+						   
+					ON td.work_seq = tw.work_seq
+					
+			WHERE tw.del_yn = 'N'
+			
+			<include refid="workWhere"/>
+			
+			GROUP BY tw.work_seq
+			ORDER BY tw.reg_date DESC
+    </select>
+    
+    
+    
+    <select id="workTotalCnt" resultType="java.lang.Integer" parameterType="hashmap">
+        SELECT COUNT(work_seq)
+        FROM (
+        SELECT  tw.work_seq
+		FROM tb_work tw INNER JOIN tb_work_author twa
+				ON tw.work_seq = twa.work_seq
+				LEFT OUTER JOIN tb_author ta
+				ON twa.author_seq = ta.author_seq
+				INNER JOIN (SELECT twg.work_seq AS work_seq, GROUP_CONCAT(tg.genre_name) AS genre_name
+									,GROUP_CONCAT(tg.`genre_seq`) AS genre_seq
+					   FROM tb_genre tg INNER JOIN tb_work_genre twg
+							    ON tg.genre_seq = twg.genre_seq
+					   GROUP BY twg.work_seq) tg
+				ON tg.work_seq = tw.work_seq
+				LEFT OUTER JOIN (SELECT twd.work_seq AS work_seq,GROUP_CONCAT(twd.day) AS days
+					   FROM tb_work tw INNER JOIN tb_work_day twd
+							   ON tw.work_seq = twd.work_seq
+					   GROUP BY twd.work_seq) td
+				ON td.work_seq = tw.work_seq
+		WHERE tw.del_yn = 'N'
+		<include refid="workWhere"/>
+		GROUP BY tw.work_seq
+		) A
+    </select>
+    
+    
+    
+</mapper>

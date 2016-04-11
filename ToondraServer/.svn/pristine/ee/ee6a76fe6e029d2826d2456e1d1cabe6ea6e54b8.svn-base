@@ -1,0 +1,50 @@
+package kr.co.toondra.web.content.service;
+
+import java.util.HashMap;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.content.dao.ContentDao;
+
+@Service
+public class ContentService {
+	
+	@Value("${url.local}")
+	String URL;
+	
+	@Autowired
+	ContentDao dao = new ContentDao();
+
+	public PMap getWork(PMap pMap) {
+		
+		HashMap<String, Object> workInfo = dao.getWork(pMap);
+		
+		pMap.put("workInfo", workInfo);
+		return pMap;
+	}
+
+	public HashMap<String, Object> contentList(PMap pMap) {
+
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		
+		int totalcnt = dao.getContentTotalCnt(pMap);
+		List<HashMap<String, Object>> contentList = dao.getContentList(pMap);
+		/*if(contentList != null){
+			for(HashMap<String, Object> map : contentList) {
+				
+				map.put("thumbnail_img_url", URL+"/"+map.get("work_seq")+"/"+map.get("content_seq")+"/"+map.get("thumbnail_img_name"));
+			}
+		}*/
+		
+		result.put("iTotalRecords", totalcnt);
+		result.put("iTotalDisplayRecords", totalcnt);		
+		result.put("aaData", contentList);
+		
+		return result;
+	}
+
+}

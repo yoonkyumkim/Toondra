@@ -1,0 +1,132 @@
+package kr.co.toondra.web.sample.view;
+
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFFont;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.util.CellRangeAddress;
+import org.apache.poi.hssf.util.HSSFColor;
+import org.springframework.web.servlet.view.document.AbstractExcelView;
+
+@SuppressWarnings("deprecation")
+public class ExcelSampleView extends AbstractExcelView {
+
+	@Override
+	protected void buildExcelDocument(Map<String, Object> model,HSSFWorkbook wb, HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+		// 현재날짜
+		Date now = new Date();
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		String today = sdf.format(now);
+
+		// 파일명
+		String excelFileName = URLEncoder.encode("TEST_EXCEL", "UTF-8");
+		response.setHeader("Content-Disposition", "ATTachment; Filename=" + excelFileName + "_" + today + ".xls");
+
+		HSSFCell cell = null;
+		// 엑셀시트 제목
+		HSSFSheet sheet1 = wb.createSheet();
+		wb.setSheetName(0, "TEST_EXCEL_LIST");
+		// 제목 스타일
+		HSSFCellStyle titleStyle = wb.createCellStyle();
+		// 폰트
+		HSSFFont font = wb.createFont();
+
+		// 병합
+		sheet1.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+		cell = getCell(sheet1, 0, 0);
+		setText(cell, "TEST_EXCEL");
+		font.setFontHeightInPoints((short) 12);
+		font.setColor((short) HSSFColor.BLACK.index);
+		font.setBoldweight(HSSFFont.BOLDWEIGHT_BOLD);
+		titleStyle.setFont(font);
+		titleStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+		cell.setCellStyle(titleStyle);
+
+		// 헤더 셀 스타일
+		HSSFCellStyle headerStyle = wb.createCellStyle();
+
+
+		// 배경색
+		headerStyle.setFillForegroundColor(HSSFColor.GREY_25_PERCENT.index);
+		headerStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+
+		// 테두리
+		headerStyle.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+		headerStyle.setBottomBorderColor(HSSFColor.BLACK.index);
+		headerStyle.setBorderLeft(HSSFCellStyle.BORDER_THIN);
+		headerStyle.setLeftBorderColor(HSSFColor.BLACK.index);
+		headerStyle.setBorderRight(HSSFCellStyle.BORDER_THIN);
+		headerStyle.setRightBorderColor(HSSFColor.BLACK.index);
+		headerStyle.setBorderTop(HSSFCellStyle.BORDER_THIN);
+		headerStyle.setTopBorderColor(HSSFColor.BLACK.index);
+		headerStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+
+		getCell(sheet1, 2, 0).setCellStyle(headerStyle);
+		sheet1.autoSizeColumn((short) 1);
+
+		// 자동 컬럼 너비
+		for (int i = 1; i < 4; i++) {
+			getCell(sheet1, 2, i).setCellStyle(headerStyle);
+			sheet1.autoSizeColumn((short) i);
+			sheet1.setColumnWidth(i, sheet1.getColumnWidth(i) + 3000);
+		}
+
+		setText(getCell(sheet1, 2, 0), "컬럼1");
+		setText(getCell(sheet1, 2, 1), "컬럼2");
+		setText(getCell(sheet1, 2, 2), "컬럼3");
+		setText(getCell(sheet1, 2, 3), "컬럼4");
+
+		@SuppressWarnings("unchecked")
+		List<HashMap<String, Object>> list = (List<HashMap<String, Object>>) model.get("aaData");
+
+		// 일반 셀 스타일
+		HSSFCellStyle cellstyle = wb.createCellStyle();
+		cellstyle.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+		cellstyle.setBottomBorderColor(HSSFColor.BLACK.index);
+		cellstyle.setBorderLeft(HSSFCellStyle.BORDER_THIN);
+		cellstyle.setLeftBorderColor(HSSFColor.BLACK.index);
+		cellstyle.setBorderRight(HSSFCellStyle.BORDER_THIN);
+		cellstyle.setRightBorderColor(HSSFColor.BLACK.index);
+		cellstyle.setBorderTop(HSSFCellStyle.BORDER_THIN);
+		cellstyle.setTopBorderColor(HSSFColor.BLACK.index);
+		cellstyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+
+		for (int i = 0; i < list.size(); i++) {
+			HashMap<String, Object> data = (HashMap<String, Object>) list.get(i);
+
+			// 0번째 컬럼
+			cell = getCell(sheet1, 3 + i, 0);
+			setText(cell, Integer.toString(i + 1));
+			cell.setCellStyle(cellstyle);
+
+			// 1번째 컬럼
+			cell = getCell(sheet1, 3 + i, 1);
+			setText(cell, (String) data.get("pkg"));
+			cell.setCellStyle(cellstyle);
+
+			// 2번째 컬럼
+			cell = getCell(sheet1, 3 + i, 2);
+			cell.setCellValue((String) data.get("user_id"));
+			cell.setCellStyle(cellstyle);
+
+			// 3번째 컬럼
+			cell = getCell(sheet1, 3 + i, 3);
+			cell.setCellValue((String) data.get("company"));
+			cell.setCellStyle(cellstyle);
+
+		}
+
+	}
+}

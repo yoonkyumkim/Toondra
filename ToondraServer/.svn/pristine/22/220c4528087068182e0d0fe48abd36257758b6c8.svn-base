@@ -1,0 +1,83 @@
+package kr.co.toondra.common.aspect;
+
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+@Aspect
+@Component("LogAspect")
+public class LogAspect {
+
+	protected Logger logger = LoggerFactory.getLogger(this.getClass());
+	
+	@SuppressWarnings("unchecked")
+	@Before("execution(* kr.co.toondra.*..controller.*Controller.*(..))")
+	public void beforeControllerLog(JoinPoint jp){
+		
+		String className = jp.getTarget().getClass().getSimpleName();
+		String methodName = jp.getSignature().getName();
+		logger.info("\t[ST][" + className + " - " + methodName + "]");
+		
+		Object[] objescts = jp.getArgs();
+		for(Object obj : objescts) {
+			if(obj instanceof HttpServletRequest) {
+				HttpServletRequest request = (HttpServletRequest)obj;
+				Enumeration<String> enumer = request.getParameterNames();
+				if(enumer.hasMoreElements()) {
+					logger.debug("==["+methodName+" request parameter]==");
+					while(enumer.hasMoreElements()) {
+						String key = enumer.nextElement();
+						logger.debug("	["+key+"]:"+request.getParameter(key));
+					}
+				}
+				break;
+			} else if(obj instanceof Map) {
+				Map<String, Object> map = (Map<String, Object>)obj;
+				if(!map.isEmpty()) {
+					Iterator<String> iter = map.keySet().iterator();
+					logger.debug("==["+methodName+" request parameter]==");
+					while(iter.hasNext()) {
+						String key = iter.next();
+						logger.debug("	["+key+"]:"+map.get(key));
+					}
+				}
+				break;
+			} else if(obj instanceof String) {
+				logger.debug("==["+methodName+" request parameter]==");
+				logger.debug((String)obj);
+			}
+		}
+	}
+	
+	@After("execution(* kr.co.toondra.*..controller.*Controller.*(..))")
+	public void afterControllerLog(JoinPoint jp){
+		String className = jp.getTarget().getClass().getSimpleName();
+		String methodName = jp.getSignature().getName();
+		logger.info("\t[ED][" + className + " - " + methodName + "]");
+	}
+	
+	@Before("execution(* kr.co.toondra.*..service.*Service.*(..))")
+	public void beforeServiceLog(JoinPoint jp){
+		String className = jp.getTarget().getClass().getSimpleName();
+		String methodName = jp.getSignature().getName();
+		logger.info("\t[ST][" + className + " - " + methodName + "]");
+	}
+	
+	@After("execution(* kr.co.toondra.*..service.*Service.*(..))")
+	public void afterServiceLog(JoinPoint jp){
+		String className = jp.getTarget().getClass().getSimpleName();
+		String methodName = jp.getSignature().getName();
+		logger.info("\t[ED][" + className + " - " + methodName + "]");
+	}
+	
+}

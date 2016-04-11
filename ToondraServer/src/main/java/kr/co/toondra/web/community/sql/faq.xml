@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="FAQ">
+
+  	<sql id="faqWhere">
+    	WHERE	faq.reg_manager_seq = manager.manager_seq
+    	AND		faq.del_yn = 'N'
+    	<choose>
+    		<when test='startRegDate != "" and endRegDate == ""'>
+		  		<![CDATA[
+	    			AND	faq.reg_date >= STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startRegDate == "" and endRegDate != ""'>
+    			<![CDATA[
+	    			AND	faq.reg_date <= STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startRegDate != "" and endRegDate != ""'>
+				AND faq.reg_date 
+					BETWEEN STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+					AND STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+    		</when>
+    	</choose>
+    	<choose>
+    		<when test='startPostDate != "" and endPostDate == ""'>
+		  		<![CDATA[
+	    			AND	faq.post_date >= STR_TO_DATE(CONCAT(#{startPostDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startPostDate == "" and endPostDate != ""'>
+    			<![CDATA[
+	    			AND	faq.post_date <= STR_TO_DATE(CONCAT(#{endPostDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startPostDate != "" and endPostDate != ""'>
+				AND faq.post_date
+					BEETWEEN STR_TO_DATE(CONCAT(#{startPostDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+					AND STR_TO_DATE(CONCAT(#{endPostDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+    		</when>
+    	</choose>
+    	
+    	<if test='question != null and question != ""'>
+    	AND		faq.question LIKE CONCAT('%',#{question},'%')
+    	</if>
+    	<if test='postYn != null and postYn != ""'>
+    	AND		faq.post_yn = #{postYn}
+    	</if>
+    </sql>
+    
+    <select id="getFAQListCount" parameterType="hashmap" resultType="integer">
+        SELECT	COUNT(faq.faq_seq)
+        FROM 	tb_faq faq
+        		,tb_manager manager
+        <include refid="faqWhere"/>
+    </select>
+    
+    <select id="getFAQList" parameterType="hashmap" resultType="hashmap">
+    	SELECT	faq.faq_seq			AS "faqSeq"
+    			,faq.question		AS "question"
+    			,faq.answer			AS "answer"
+    			,faq.post_yn		AS "postYn"
+    			,IF(faq.post_yn = 'Y', '게시중', '게시중지') AS "postYnStr"
+    			,faq.reg_manager_seq AS "managerSeq"
+    			,manager.id			AS "id"
+    			,DATE_FORMAT(faq.reg_date, '%Y-%m-%d %H:%i:%s')	AS "regDate"
+    			,DATE_FORMAT(faq.post_date, '%Y-%m-%d %H:%i:%s')	AS "postDate"
+    	FROM	tb_faq faq
+        		,tb_manager manager
+        <include refid="faqWhere"/>
+    	ORDER BY faq.faq_seq desc
+		<if test="iDisplayStart != null and iDisplayLength != null">
+		LIMIT 	#{iDisplayStart}, #{iDisplayLength}
+		</if>
+    </select>
+    
+    <select id="getFAQ" parameterType="hashmap" resultType="hashmap">
+    	SELECT	faq.faq_seq			AS "faqSeq"
+    			,faq.question		AS "question"
+    			,faq.answer			AS "answer"
+    			,faq.post_yn		AS "postYn"
+    			,IF(faq.post_yn = 'Y', '게시중', '게시중지') AS "postYnStr"
+    			,faq.reg_manager_seq AS "managerSeq"
+    			,manager.id			AS "id"
+    			,manager.name		AS "name"
+    			,DATE_FORMAT(faq.reg_date, '%Y-%m-%d %H:%i:%s')	AS "regDate"
+    			,DATE_FORMAT(faq.post_date, '%Y-%m-%d %H:%i:%s')	AS "postDate"
+    	FROM	tb_faq faq
+        		,tb_manager manager
+        WHERE	faq.reg_manager_seq = manager.manager_seq
+        AND		faq.del_yn = 'N'
+        AND		faq.faq_seq = #{faqSeq}
+    </select>
+    
+    <insert id="insertFAQ" parameterType="hashmap">
+    	INSERT INTO	tb_faq
+    				(
+    				question
+    				,answer
+    				,reg_manager_seq
+    				,reg_date
+    				,post_yn
+    	<if test='postYn == "Y"'>
+    				,post_date
+    	</if>
+    				)
+    	VALUES		(
+    				#{question}
+    				,#{answer}
+    				,#{managerSeq}
+    				,NOW()
+    				,#{postYn}
+    	<if test='postYn == "Y"'>
+    				,NOW()
+    	</if>
+    				)
+    </insert>
+    
+    <update id="updateFAQ" parameterType="hashmap">
+    	UPDATE	tb_faq
+    	SET		question 	= #{question}
+    			,answer 	= #{answer}
+    			,post_yn 	= #{postYn}
+		<choose>
+			<when test='postYn == "Y"'>
+				,post_date 	= (IF(post_date IS NULL, NOW(), post_Date))
+			</when>
+			<otherwise>
+				,post_date 	= null
+			</otherwise>
+		</choose>
+    			,upt_manager_seq = #{managerSeq}
+    			,upt_date = NOW()
+    	WHERE	faq_seq = #{faqSeq}
+    </update>
+    
+	<update id="deleteFAQ" parameterType="hashmap">
+		UPDATE	tb_faq
+		SET		del_yn = 'Y'
+				,upt_manager_seq = #{managerSeq}
+    			,upt_date = NOW()
+		WHERE	faq_seq IN
+		<foreach collection="list" item="faq" index="index" separator="," open="(" close=")">
+           #{faq}
+        </foreach>
+	</update>    
+
+	<update id="updateFAQPost" parameterType="hashmap">
+		UPDATE	tb_faq
+		SET		post_yn = #{postYn}
+				,upt_manager_seq = #{managerSeq}
+    			,upt_date = NOW()
+		<choose>
+			<when test='postYn == "Y"'>
+				,post_date = (IF(post_date IS NULL, NOW(), post_Date))
+			</when>
+			<otherwise>
+				,post_date = null
+			</otherwise>
+		</choose>
+		WHERE	faq_seq IN
+		<foreach collection="list" item="faq" index="index" separator="," open="(" close=")">
+           #{faq}
+        </foreach>
+	</update>
+
+</mapper>

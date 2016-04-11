@@ -1,0 +1,12 @@
+package GCMSend;
+
+import GCMSend.service.GCMService;
+
+
+public class GCMSend {
+	public static void main(String[] args) {
+		GCMService service = new GCMService();
+		service.getGCMList();
+	}
+
+}

@@ -1,0 +1,30 @@
+package GCMSend.dao;
+
+import java.util.HashMap;
+import java.util.List;
+
+import common.dao.CommonDAO;
+
+public class GCMDAO extends CommonDAO{
+	
+	public <T> List<T> getList() throws Exception{
+		return selectList("gcm.list");
+	}
+	
+	public List<String> getRegist() throws Exception{
+		return selectList("gcm.regList");
+	}
+	
+	public int sendUpdate(HashMap<String, Object> params) throws Exception{
+		return update("gcm.sendUpdate", params);
+	}
+
+	public List<String> getMemberPushList(HashMap<String,Object> map) throws Exception {
+		return selectList("gcm.getMemberPushList", map);
+	}
+
+	public List<HashMap<String, Object>> getWorkSeqList() throws Exception {
+		return selectList("gcm.getWorkSeqList");
+	}
+
+}

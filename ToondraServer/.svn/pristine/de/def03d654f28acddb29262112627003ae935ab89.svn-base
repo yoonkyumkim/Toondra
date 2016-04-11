@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="gcm">
+    <select id="list" resultType="hashmap">
+        SELECT push_seq AS push_seq
+        	   ,title AS title
+        	   ,content AS content
+		FROM tb_push_send
+		WHERE send_state = '00'
+		AND send_datetime <![CDATA[ <= ]]> CURRENT_TIMESTAMP
+		AND type = '00'
+    </select>
+    <select id="getMemberPushList" parameterType="hashmap" resultType="String">
+        SELECT td.reg_id AS reg_id
+		FROM tb_push_send tps INNER JOIN tb_work tw
+				      ON tps.work_seq = tw.work_seq
+				      INNER JOIN tb_member_work_push tmwp
+				      ON tps.work_seq = tmwp.work_seq
+				      INNER JOIN tb_member_login tml
+				      ON tmwp.member_seq = tml.member_seq
+				      INNER JOIN tb_device td
+				      ON tml.device_seq = td.device_seq
+		WHERE send_state = '00'
+		AND send_datetime <![CDATA[ <= ]]> CURRENT_TIMESTAMP
+		AND tmwp.work_seq = #{work_seq}
+		AND tmwp.push_yn = 'Y';
+    </select>
+    
+    
+    <select id="regList" parameterType="hashmap" resultType="String">
+        SELECT reg_id
+        FROM tb_device;
+    </select>
+    
+    <update id="sendUpdate" parameterType="hashmap">
+		UPDATE tb_push_send
+		SET send_state = '01'
+		WHERE push_seq = #{push_seq}       
+    </update>
+    
+    <select id="getWorkSeqList" resultType="hashmap">
+        SELECT DISTINCT tmwp.work_seq AS work_seq
+        			   ,tw.work_name AS work_name
+		FROM tb_member_work_push tmwp INNER JOIN tb_work tw
+					      ON tmwp.work_seq = tw.work_seq
+		WHERE tmwp.push_yn = 'Y';
+    </select>
+    
+</mapper>

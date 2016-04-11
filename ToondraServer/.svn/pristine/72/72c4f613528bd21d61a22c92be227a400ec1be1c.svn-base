@@ -1,0 +1,59 @@
+package kr.co.toondra.web.login.controller;
+
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.base.controller.BaseController;
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.login.service.LoginService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@RequestMapping("/admin/login")
+@Controller
+public class LoginController extends BaseController{
+	
+	@Autowired
+	LoginService service = new LoginService();
+
+	@RequestMapping(value = "/loginView", method = RequestMethod.GET)
+	public String loginView(HttpServletRequest request) {
+		logger.debug("[ST][/loginView]");
+		
+		if(request.getSession().getAttribute("s_manager_seq") != null){
+			logger.debug("[ED][loginView]");
+			return "redirect:/admin/work/workListView";
+		}
+		logger.debug("[ED][/loginView]");
+		
+		return "toondra/login/loginView";
+	}
+	
+	@RequestMapping(value = "/loginDo")
+	public String login(HttpServletRequest request, Model model, RedirectAttributes ra){
+		logger.debug("[ST][/login]");
+		if(service.login(new PMap(request))) {
+			logger.debug("[ED][/login]");
+			return "redirect:/admin/work/workListView";
+		}
+		ra.addFlashAttribute("result", "false");
+		logger.debug("[ED][/login]");
+		return "redirect:/admin/login/loginView";
+	}
+	
+	@RequestMapping(value="/logout")
+	public String logout(HttpServletRequest request) {
+		logger.debug("[ST][/logout]");
+		request.getSession().invalidate();
+		
+		logger.debug("[ST][/logout]");
+		return "redirect:/admin/login/loginView";
+	}
+	
+	
+}

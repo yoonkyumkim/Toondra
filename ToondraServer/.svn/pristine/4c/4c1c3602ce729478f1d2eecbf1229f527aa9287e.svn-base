@@ -1,0 +1,10 @@
+package kr.co.toondra.api.work.dao;
+
+import org.springframework.stereotype.Repository;
+
+import kr.co.toondra.base.dao.BaseDao;
+
+@Repository("apiWorkDao")
+public class WorkDao extends BaseDao {
+	
+}

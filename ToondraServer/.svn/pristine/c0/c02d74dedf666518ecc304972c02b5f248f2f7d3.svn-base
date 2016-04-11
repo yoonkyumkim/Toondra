@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="API.Work">
+
+ 	<sql id="workWhere">
+               <if test='gubun == "work_name"'>
+            <if test='searchParam != null and searchParam != ""' >
+            	AND (work_name LIKE CONCAT('%',#{searchParam},'%'))
+        	</if>
+        </if>
+        <if test='gubun == "author_name"'>
+            <if test='searchParam != null and searchParam != ""' >
+            	AND (author_name LIKE CONCAT('%',#{searchParam},'%'))
+        	</if>
+        </if>
+        <if test='fin_yn != null and fin_yn != ""'>
+    		AND	tw.fin_yn = #{fin_yn}
+    	</if>
+    	 <if test='day != null and day != ""'>
+    		AND	td.days LIKE CONCAT('%',#{day},'%')
+    	</if>
+    	 <if test='genre_seq != null and genre_seq != ""'>
+    		AND tg.genre_seq LIKE CONCAT('%',#{genre_seq},'%')
+    	</if>
+    	 <if test='service_state != null and service_state != ""'>
+    		AND	tw.service_state = #{service_state}
+    	</if>
+    	<if test='last_update_date != null and last_update_date != ""'>
+    		<![CDATA[
+	    			AND	(tw.reg_date >= STR_TO_DATE(#{last_update_date}, '%Y-%m-%d %H:%i:%s')
+	    			OR	tw.upt_date >= STR_TO_DATE(#{last_update_date}, '%Y-%m-%d %H:%i:%s'))
+    		]]>
+    	</if>
+    </sql>
+    
+    <sql id="contentWhere">
+   		<if test='last_update_date != null and last_update_date != ""'>
+    		<![CDATA[
+	    			AND	upt_date >= STR_TO_DATE(#{last_update_date}, '%Y-%m-%d %H:%i:%s')
+    		]]>
+    	</if>
+    </sql>
+
+ 	<select id="getWorkList" resultType="hashmap" parameterType="hashmap">
+	 	SELECT  
+	 			tw.work_seq AS work_seq
+				, tw.work_name AS work_name
+				, tw.work_desc AS work_desc
+				, IFNULL(tw.thumbnail_img_name, "") AS thumbnail_img_url
+				, GROUP_CONCAT(ta.author_name) AS author_name
+				, tg.genre_seq AS genre_seq
+				, tg.genre_name AS genre_name
+				, IFNULL(REPLACE(td.days, ',', '-'), "") AS day
+				, tw.fin_yn AS fin_yn
+				, DATE_FORMAT(tw.reg_date, '%Y-%m-%d %H:%i:%s') AS reg_date
+				, DATE_FORMAT(tw.upt_date, '%Y-%m-%d %H:%i:%s') AS upt_date
+				, tw.service_state AS service_state
+				, tw.del_yn AS del_yn
+		
+		FROM tb_work tw INNER JOIN tb_work_author twa
+					ON tw.work_seq = twa.work_seq
+					LEFT OUTER JOIN tb_author ta
+					ON twa.author_seq = ta.author_seq
+					INNER JOIN (SELECT 
+										twg.work_seq AS work_seq
+										, GROUP_CONCAT(tg.genre_name) AS genre_name
+										,GROUP_CONCAT(tg.`genre_seq`) AS genre_seq
+										
+						  		FROM tb_genre tg INNER JOIN tb_work_genre twg ON tg.genre_seq = twg.genre_seq
+						   GROUP BY twg.work_seq) tg
+						   
+					ON tg.work_seq = tw.work_seq
+					
+					LEFT OUTER JOIN (SELECT 
+											twd.work_seq AS work_seq
+											, GROUP_CONCAT(twd.day) AS days
+						   			
+						   			FROM tb_work tw INNER JOIN tb_work_day twd ON tw.work_seq = twd.work_seq
+						   GROUP BY twd.work_seq) td
+						   
+						   
+					ON td.work_seq = tw.work_seq
+					
+			WHERE tw.del_yn = 'N'
+			
+			<include refid="workWhere"/>
+			
+			GROUP BY tw.work_seq
+			ORDER BY tw.reg_date DESC
+    </select>
+    
+    
+    
+    <select id="getWorkTotalCnt" resultType="java.lang.Integer" parameterType="hashmap">
+        SELECT COUNT(work_seq)
+        FROM (
+        SELECT  tw.work_seq
+		FROM tb_work tw INNER JOIN tb_work_author twa
+				ON tw.work_seq = twa.work_seq
+				LEFT OUTER JOIN tb_author ta
+				ON twa.author_seq = ta.author_seq
+				INNER JOIN (SELECT twg.work_seq AS work_seq, GROUP_CONCAT(tg.genre_name) AS genre_name
+									,GROUP_CONCAT(tg.`genre_seq`) AS genre_seq
+					   FROM tb_genre tg INNER JOIN tb_work_genre twg
+							    ON tg.genre_seq = twg.genre_seq
+					   GROUP BY twg.work_seq) tg
+				ON tg.work_seq = tw.work_seq
+				LEFT OUTER JOIN (SELECT twd.work_seq AS work_seq,GROUP_CONCAT(twd.day) AS days
+					   FROM tb_work tw INNER JOIN tb_work_day twd
+							   ON tw.work_seq = twd.work_seq
+					   GROUP BY twd.work_seq) td
+				ON td.work_seq = tw.work_seq
+		WHERE tw.del_yn = 'N'
+		<include refid="workWhere"/>
+		GROUP BY tw.work_seq
+		) A
+    </select>
+    
+    
+	<select id="getContentTotalCnt" resultType="java.lang.Integer" parameterType="hashmap">
+		SELECT 
+					COUNT(content_seq)
+					
+		FROM 		tb_content
+		WHERE 		work_seq = #{work_seq}	AND del_yn ='N'
+		<include refid="contentWhere"/>
+	</select>
+    
+    
+    <select id="getContentList" resultType="hashmap" parameterType="hashmap">
+		SELECT
+					content_seq
+					, title
+					, service_state
+					, IFNULL(thumbnail_img_name, "") AS thumbnail_img_url
+					, content_order
+					, paid_yn
+					, coin
+					, DATE_FORMAT(reg_date, '%Y-%m-%d %H:%i:%s') AS reg_date
+					, DATE_FORMAT(upt_date, '%Y-%m-%d %H:%i:%s') AS upt_date
+					, del_yn
+					
+		FROM 		tb_content
+		WHERE 		del_yn = 'N'
+					AND work_seq = #{work_seq}
+		<include refid="contentWhere"/>
+		ORDER BY	content_order DESC
+	</select>
+    
+    <select id="getWorkInfo" resultType="hashmap" parameterType="hashmap">
+    		SELECT
+    					tw.work_seq AS work_seq
+						, tw.work_name AS work_name
+						, tw.work_desc AS work_desc
+						, IFNULL(tw.thumbnail_img_name, "") AS work_thumnail_img_url
+						, GROUP_CONCAT(ta.author_name) AS author_name
+						, tw.fin_yn AS fin_yn
+						
+			FROM 		tb_work tw INNER JOIN tb_work_author twa ON tw.work_seq = twa.work_seq
+						LEFT OUTER JOIN tb_author ta ON twa.author_seq = ta.author_seq
+			WHERE 		tw.del_yn = 'N'	AND tw.work_seq = #{work_seq}
+    </select>
+    <select id="getMemberWorkViewList" parameterType="hashmap" resultType="java.lang.String">
+    	 SELECT 
+				waut.work_seq AS work_seq
+				,IFNULL(wo.work_name, "") AS work_name
+				, IFNULL(wo.work_desc, "") AS work_desc
+				, IFNULL(wo.thumbnail_img_name, "") AS thumbnail_img_url
+				, IFNULL(aut.author_name, "") AS author_name
+				
+		FROM 	tb_author AS aut INNER JOIN tb_work_author AS waut ON aut.author_seq = waut.author_seq 
+		LEFT 	JOIN tb_work AS wo ON waut.work_seq = wo.work_seq;
+		WHERE 	waut.work_seq = 
+		<foreach item="work_seq" collection="workSeqList" open="(" separator="," close=")">
+				#{work_seq}
+		</foreach>
+    </select>
+    
+   	<select id="getWorkSeqList" parameterType="java.lang.String" resultType="java.lang.String">
+   		SELECT 
+					IFNULL(work_seq, "") AS work_seq
+					, IFNULL(DATE_FORMAT(views_date, '%Y-%m-%d %H:%i:%s'), "") AS views_date
+					
+		FROM		tb_member_work_views
+		WHERE		DATE(views_date) >= DATE(SUBDATE(NOW(), INTERVAL 20 DAY)) 
+		AND 		DATE(views_date) <![CDATA[ <= ]]> DATE(NOW())
+		AND			member_seq = #{memberSeq}
+		
+   	</select>
+    
+   	<select id="getMemberSeq" parameterType="hashmap" resultType="hashmap">
+    	SELECT 
+    				IFNULL(member_seq, "") AS member_seq
+    				
+		FROM 		tb_member_login
+		WHERE 		login_key = #{login_key}
+    </select>
+    
+    
+    <select id="updateWorkPushState" parameterType="hashmap" resultType="java.lang.Integer">
+		UPDATE
+					tb_member_work_push
+		SET
+					push_yn = #{push_yn}
+		WHERE		member_seq = #{member_seq} AND work_seq = #{work_seq}
+    </select>
+    
+    
+    <select id="insertWorkPushState" parameterType="hashmap" resultType="java.lang.Integer">
+		INSERT INTO	tb_member_work_push
+			(
+					member_seq
+					, work_seq
+					, push_yn
+			)
+		VALUES
+			(
+					#{member_seq}
+					, #{work_seq}
+					, 'Y'
+			)
+    </select>
+    
+    <select id="getWorkPushState" parameterType="hashmap" resultType="java.lang.Integer">
+		SELECT 
+					COUNT(member_seq)
+					
+		FROM		tb_member_work_push
+		WHERE		member_seq = #{member_seq}	AND work_seq = #{work_seq}
+    </select>
+    
+
+    <select id="updateWorkViewState" parameterType="hashmap" resultType="java.lang.Integer">
+		UPDATE
+					tb_member_work_views
+		SET
+					views_date = NOW()
+		WHERE		member_seq = #{member_seq} AND work_seq = #{work_seq}
+    </select>
+    
+    
+    <select id="insertWorkViewState" parameterType="hashmap" resultType="java.lang.Integer">
+		INSERT INTO	tb_member_work_views
+			(
+					member_seq
+					, work_seq
+					, views
+			)
+		VALUES
+			(
+					#{member_seq}
+					, #{work_seq}
+					, NOW()
+			)
+    </select>
+    
+    <select id="getWorkViewState" parameterType="hashmap" resultType="java.lang.Integer">
+		SELECT 
+					COUNT(member_seq)
+					
+		FROM		tb_member_work_views
+		WHERE		member_seq = #{member_seq} AND work_seq = #{work_seq}
+    </select>
+    
+    <select id="getContentInfo" parameterType="hashmap" resultType="hashmap">
+    	SELECT
+					content_seq
+					, work_seq
+					, title
+					, content_enc_key
+		FROM		tb_content
+		WHERE		content_seq = #{content_seq} AND del_yn = "N"
+    	
+    </select>
+    
+    <select id="getContentFileInfo" parameterType="hashmap" resultType="hashmap">
+    	SELECT 
+    				IFNULL(content_file_name, "") AS content_img_url
+    				, content_file_order
+    				
+    	FROM		tb_content_file
+    	WHERE		content_seq = #{content_seq}
+    	ORDER BY	content_file_order ASC
+    </select>
+    
+    <select id="getContentFileTotalCnt" parameterType="hashmap" resultType="java.lang.Integer">
+    	SELECT 
+    				COUNT(content_file_seq)
+    				
+    	FROM		tb_content_file
+    	WHERE		content_seq = #{content_seq}
+    </select>
+    
+    <select id="getEncKey" parameterType="hashmap" resultType="java.lang.String">
+    	SELECT
+    				IFNULL(enc_key, "")	AS enc_key
+    				
+    	FROM		tb_device
+    	WHERE		device_id = #{device_id}
+    </select>
+    
+    
+    <select id="getContentPurchaseInfo" parameterType="hashmap" resultType="hashmap">
+    	SELECT
+    				purchase_seq
+    				, purchase_coin
+    				, DATE_FORMAT(purchase_date, '%Y-%m-%d %H:%i:%s') AS purchase_date
+    				, IFNULL(del_yn, "") AS del_yn
+    				, IFNULL(DATE_FORMAT(del_date, '%Y-%m-%d %H:%i:%s'), "") AS del_date
+    				
+    	FROM		tb_content_purchase
+    	WHERE		member_seq = #{member_seq} AND content_seq = #{content_seq}
+    </select>
+    
+    <select id="getMemberCoin" parameterType="hashmap" resultType="java.lang.Integer">
+    	SELECT
+    				retention_coin
+    				
+    	FROM		tb_member
+    	WHERE		member_seq = #{member_seq}
+    </select>
+    
+    <select id="getWorkViewList" parameterType="hashmap" resultType="hashmap">
+    	SELECT 
+					wo.work_seq AS work_seq
+					, wo.work_name AS work_name
+					, IFNULL(wo.work_desc, "") AS work_desc
+					, wo.thumbnail_img_name AS thumbnail_img_name
+					, wo.service_state AS service_state
+					, wo.fin_yn AS fin_yn
+					, wo.work_seq AS work_seq
+					
+		FROM tb_member_work_views AS mwv JOIN tb_work wo ON mwv.work_seq = wo.work_seq
+		WHERE member_seq = #{member_seq}
+    </select>
+    
+    <select id="getAuthorInfo" parameterType="hashmap" resultType="hashmap">
+    	
+    </select>
+    
+    
+</mapper>

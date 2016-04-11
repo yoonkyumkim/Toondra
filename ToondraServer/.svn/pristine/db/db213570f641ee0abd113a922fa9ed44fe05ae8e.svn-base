@@ -1,0 +1,54 @@
+package kr.co.toondra.api.device.service;
+
+import java.security.PrivateKey;
+import java.util.HashMap;
+
+import kr.co.toondra.api.bean.Result;
+import kr.co.toondra.api.device.dao.DeviceDao;
+import kr.co.toondra.common.util.FileReadUtil;
+import kr.co.toondra.common.util.RSAUtils;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+
+@Service("apiDeviceService")
+public class DeviceService {
+	
+	
+	@Autowired
+	private DeviceDao dao;
+	
+	@Value("${file.path.priKey}")
+	private String PRIVATE_KEY_PATH;
+	public Result insertDeviceKey(HashMap<String, Object> param) throws Exception{
+		
+		Result result = new Result();
+
+		String priKey = new FileReadUtil().fileRead(PRIVATE_KEY_PATH);
+		
+		PrivateKey rPriveteKey = RSAUtils.getRSAPrivateKey(priKey);
+		
+		String encKey = String.valueOf((String)param.get("enc_key"));
+		String decEncKey = RSAUtils.decPrivateRSA(rPriveteKey, encKey.replaceAll("\\r", "").replaceAll("\\n", ""));
+		
+		
+		param.put("enc_key", decEncKey);
+		
+		if(dao.getDeviceIdOverlapCheck(param) == 1) {
+			dao.updateDeviceInfo(param);
+		} else {
+			dao.insertDeviceInfo(param);
+		}
+		
+		HashMap<String, Object> deviceInfo =  dao.getDeviceInfo(param);
+
+		result.putObject("device_seq", deviceInfo.get("device_seq"));
+		
+		
+		return result;
+	}
+	
+
+}

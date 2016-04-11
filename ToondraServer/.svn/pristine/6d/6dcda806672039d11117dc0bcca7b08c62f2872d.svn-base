@@ -1,0 +1,50 @@
+package kr.co.toondra.api.work.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import kr.co.toondra.api.bean.Result;
+import kr.co.toondra.api.work.dao.WorkDao;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service("apiWorkService")
+public class WorkService {
+
+	@Autowired
+	private WorkDao dao;
+	
+	public Result getWorkList(HashMap<String, Object> param) {
+		Result result = new Result();
+		
+		//TODO 가라데이터임. 작업 필요
+		List<HashMap<String, Object>> workList = new ArrayList<HashMap<String, Object>>();
+		
+		HashMap<String, Object> work;
+		int totalCnt = 15;
+		for(int idx = 0; idx < totalCnt; idx++) {
+			work = new HashMap<String, Object>();
+			work.put("work_seq", idx + "");
+			work.put("work_name", "신의탑"+idx);
+            work.put("thumbnail_image_url" , "http://thumb.comic.naver.net/webtoon/183559/thumbnail/title_thumbnail_20140810204630_t125x101.JPG");
+            work.put("service_state" , "서비스 상태");
+            work.put("author_name" , "작가명");
+            work.put("work_description" , "작품설명");
+            work.put("fin_yn" , "n");
+            work.put("genre_seq" , "18");
+            work.put("genre_name" , "판타지");
+            work.put("day" , "1");
+            work.put("del_yn", "N");
+            work.put("reg_date", "2015-03-25 07:07:07 ");
+            work.put("upt_date" , "2015-03-26 07:07:07");
+            workList.add(work);
+		}
+		result.putObject("total_cnt", totalCnt);
+		result.putObject("work_list", workList);
+		
+		return result;
+	}
+	
+}

@@ -1,0 +1,15 @@
+#mail
+mail.host=smtp.gmail.com
+#mail.host =localhost
+mail.protocol=smpts
+mail.smtp.socket=javax.net.ssl.SSLSocketFactory
+mail.smtp.port=465
+mail.auth.email=ahope.craft@gmail.com
+mail.auth.passwd=dkghq99!!
+mail.from.email=help@appshields.com
+mail.from.name=Toondra
+
+post.api=http://biz.epost.go.kr/KpostPortal/openapi
+post.reg_key=2714b254209c07fc71425431876241
+
+inquiry_title=\ub2f5\ubcc0

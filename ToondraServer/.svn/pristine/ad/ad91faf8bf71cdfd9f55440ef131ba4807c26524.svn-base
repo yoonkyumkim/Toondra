@@ -1,0 +1,78 @@
+package kr.co.toondra.web.community.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.base.controller.BaseController;
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.community.service.NoticeService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping("/admin/community/notice")
+@Controller
+public class NoticeController extends BaseController {
+
+	@Autowired
+	private NoticeService service;
+	
+	@RequestMapping("/list")
+	public String noticeList(Model model) {
+		
+		return "toondra/community/notice/noticeList";
+	}
+	
+	@RequestMapping("/list/ajax")
+	public String noticeListAjax(HttpServletRequest req, Model model) {
+		
+		PMap pMap = new PMap(req);
+		
+		pMap.put("iDisplayStart", pMap.getInt("iDisplayStart"));
+		pMap.put("iDisplayLength", pMap.getInt("iDisplayLength"));
+		
+		model.addAllAttributes(service.getNoticeList(pMap));
+		
+		return "jacksonView";
+	}
+
+	@RequestMapping("/insert")
+	public String insertNoticeView(HttpServletRequest req, Model model) throws Exception {
+		
+		return "toondra/community/notice/notice";
+	}
+	
+	@RequestMapping("/insert/ajax")
+	public String insertNotice(HttpServletRequest req, Model model) throws Exception {
+		System.out.println("Test!!!");
+		service.insertNotice(new PMap(req));
+		model.addAttribute("result", true);
+		
+		return "jacksonView";
+	}
+	
+	@RequestMapping("/update")
+	public String updateNoticeView(HttpServletRequest req, Model model) throws Exception {
+		
+		return "toondra/community/notice/notice";
+	}
+	
+	@RequestMapping("/update/ajax")
+	public String updateNotice(HttpServletRequest req, Model model) throws Exception {
+		
+		service.updateNotice(new PMap(req));
+		model.addAttribute("result", true);
+		
+		return "jacksonView";
+	}
+	
+	@RequestMapping("/delete/ajax")
+	public String deleteNotice(HttpServletRequest req, Model model) throws Exception {
+		
+		service.deleteNotice(new PMap(req));
+		model.addAttribute("result", true);
+		
+		return "jacksonView";
+	}
+}

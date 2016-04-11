@@ -1,0 +1,132 @@
+package kr.co.toondra.web.work.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import kr.co.toondra.base.controller.BaseController;
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.work.service.WorkService;
+
+@RequestMapping(value="/admin/work")
+@Controller
+public class WorkController extends BaseController{
+	
+	@Autowired
+	WorkService service = new WorkService();
+	
+	@RequestMapping(value="/workListView")
+	public String workListView(HttpServletRequest request,Model model){
+		logger.debug("[ST][/workListView]");
+		PMap pMap = new PMap(request);
+	
+		pMap = service.genreList(pMap);
+		model.addAllAttributes(pMap);
+		logger.debug("[ED][/workListView]");
+		
+		return "toondra/work/workList";
+	}
+	
+	@RequestMapping(value="/workList")
+	public String workList(HttpServletRequest request, Model model){
+		logger.debug("[ST][/workList]");
+		PMap pMap = new PMap(request);
+		System.out.println(request.getParameter("serivce_state"));
+		pMap.put("iDisplayStart", pMap.getInt("iDisplayStart"));
+		pMap.put("iDisplayLength", pMap.getInt("iDisplayLength"));
+		model.addAllAttributes(service.workList(pMap));
+		logger.debug("[ED][/workList]");
+		
+		return "jacksonView";
+	}
+
+	@RequestMapping(value="/insertWorkView")
+	public String insertWorkView(HttpServletRequest request,Model model) {
+		logger.debug("[ST][/insertWorkView]");
+		PMap pMap = new PMap(request);
+		pMap = service.genreList(pMap);
+		model.addAllAttributes(pMap);
+		logger.debug("[ED][/insertWorkView]");
+		
+		return "toondra/work/workInsert";
+	}
+	
+	@RequestMapping(value="/searchAuthor")
+	public String searchAuthor(HttpServletRequest request, Model model){
+		logger.debug("[ST][/searchAuthor]");
+		
+		PMap pMap = new PMap(request);
+		System.out.println("==============" + pMap);
+		pMap = service.searchAuthor(pMap);
+		model.addAllAttributes(pMap);
+		logger.debug("[ED][/searchAuthor]");
+		
+		return "jacksonView";
+	}
+	
+	@RequestMapping(value="/popup/authorPopup")
+	public String authorPopup(HttpServletRequest request,Model model) {
+		logger.debug("[ST][/authorPopup]");
+		model.addAllAttributes(new PMap(request));
+		logger.debug("[ED][/authorPopup]");
+		
+		return "toondra/popup/authorPopup";
+	}
+	
+	@RequestMapping(value="/insertWork")
+	public String insertWork(HttpServletRequest request, Model model) {
+		logger.debug("[ST][/insertWork]");
+		PMap pMap = new PMap(request);
+		pMap = service.insertWork(pMap);
+		model.addAllAttributes(pMap);
+		logger.debug("[ED][/insertWork]");
+		
+		return "toondra/work/workInsert";
+	}
+	
+	@RequestMapping(value="/updateWorkService")
+	public String updateWorkService(HttpServletRequest request, Model model) throws Exception {
+		logger.debug("[ST][/updateWorkService]");
+		service.updateWorkState(new PMap(request));
+		model.addAttribute("result", true);
+		logger.debug("[ED][/updateWorkService]");
+		
+		return "jacksonView";
+	}
+	
+	@RequestMapping(value="/deleteWork")
+	public String deleteWork(HttpServletRequest req, Model model) throws Exception {
+		logger.debug("[ST][/deleteWork]");
+		service.deleteWork(new PMap(req));
+		model.addAttribute("result", true);
+		logger.debug("[ED][/deleteWork]");
+		
+		return "jacksonView";
+	}
+
+	
+	@RequestMapping(value="/workDetail")
+	public String getWork(HttpServletRequest request, Model model){
+		logger.debug("[ST][/workDetail]");
+		PMap pMap = new PMap(request);
+		pMap = service.getWork(pMap);
+		model.addAllAttributes(pMap);
+		logger.debug("[ED][/workDetail]");
+		
+		return "toondra/work/workDetail";
+	}
+	
+	@RequestMapping(value="/updateWork")
+	public String updateWork(HttpServletRequest request, Model model){
+		logger.debug("[ST][/updateWork]");
+		PMap pMap = new PMap(request);
+		pMap = service.updateWork(pMap);
+		model.addAllAttributes(pMap);
+		logger.debug("[ED][/updateWork]");
+		
+		return "toondra/work/workDetail";
+	}
+}

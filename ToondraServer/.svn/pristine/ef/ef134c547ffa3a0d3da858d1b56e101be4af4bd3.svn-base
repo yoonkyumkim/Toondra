@@ -1,0 +1,64 @@
+package kr.co.toondra.api.sample.controller;
+
+import java.io.IOException;
+import java.util.HashMap;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import kr.co.toondra.api.sample.service.ApiSampleService;
+import net.sf.json.JSONObject;
+
+import org.codehaus.jackson.map.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+@RequestMapping("/api/sample")
+public class ApiSampleController {
+	
+	
+	@Autowired
+	ApiSampleService service;
+	
+	
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/test", method = RequestMethod.GET)
+	public @ResponseBody String apiTest(@RequestBody String jsonString) throws IOException {
+		
+		HashMap<String, Object> map = new ObjectMapper().readValue(jsonString, HashMap.class);
+		
+		map.put("test", "test2");
+		
+		
+		
+		JSONObject json = new JSONObject();
+		
+		json.putAll(map);
+
+		
+		
+		
+		
+		return json.toString();
+	}
+
+	@RequestMapping(value = "/testAjax", method = RequestMethod.GET )
+	public String testAjax(HttpServletRequest request, Model model) throws IOException {
+				
+		System.out.println("aa : " + request.getParameter("aa"));
+		System.out.println("bb : " + request.getParameter("bb"));
+		System.out.println("cc : " + request.getParameter("cc"));
+		
+		
+		System.out.println("testAjax");
+		
+		model.addAttribute("data", "1234");
+		return "jacksonView";
+	}
+}

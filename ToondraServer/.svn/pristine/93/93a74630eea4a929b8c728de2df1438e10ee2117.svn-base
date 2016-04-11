@@ -1,0 +1,107 @@
+package kr.co.toondra.api.common;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+
+
+
+import kr.co.toondra.common.collection.PMap;
+
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+import org.springframework.beans.factory.annotation.Value;
+
+public class PostApi {
+	@Value("${post.api}")
+	private String API;
+	
+	@Value("${post.reg_key}")
+	private String REG_KEY;
+	
+	public List<HashMap<String, String>> getPost(PMap pMap) {
+		URLConnection conn = null;
+		List<Element> list = null;
+		List<HashMap<String,String>> zipList = new ArrayList<HashMap<String,String>>();
+		InputStream is = null;
+		//조회할 형식 post = 우편번호 검색, postRoad = 도로명 검색
+		String target = pMap.getString("target");
+		try {
+			URL url = new URL(API + "?regkey=" + REG_KEY + "&target=" + target + "&query=" 
+					+ URLEncoder.encode(pMap.getString("zip"), "EUC-KR"));
+			conn = url.openConnection();
+			conn.setRequestProperty("accept-language", "ko");
+			
+			SAXBuilder builder = new SAXBuilder();
+			is = conn.getInputStream();
+			
+			Document doc = builder.build(is);
+			HashMap<String, String> map = new HashMap<String, String>();
+			if(doc.getRootElement().getChildText("error_code") != null) {
+				map.put("status", "FAIL");
+				map.put("error_code", doc.getRootElement().getChildText("error_code"));
+				map.put("message", doc.getRootElement().getChildText("message"));
+				zipList.add(map);
+				return zipList;
+			} 
+			
+			Element itemlist = doc.getRootElement().getChild("itemlist");
+			list = itemlist.getChildren();
+			if(list != null){
+				map.put("status", "SUCCESS");
+				zipList.add(map);
+				if(target.equals("post")) {
+					for(int i = 0; i < list.size(); i++) {
+						Element item = list.get(i);
+						HashMap<String, String> data = new HashMap<String, String>();
+						data.put("address", item.getChildText("address"));
+						data.put("postcd", item.getChildText("postcd"));
+						zipList.add(data);
+					}
+				} else {
+					for(int i = 0; i < list.size(); i++) {
+						Element item = list.get(i);
+						HashMap<String, String> data = new HashMap<String, String>();
+						data.put("address", item.getChildText("lnmAddress"));
+						data.put("rnAddress", item.getChildText("rnAddress"));
+						data.put("postcd", item.getChildText("postCd"));
+						zipList.add(data);
+					}
+				}
+			} else {
+				map.put("status", "FAIL");
+				zipList.add(map);
+			}
+			
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (JDOMException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			try {
+				if(is!=null) {is.close();}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		return zipList; 
+		
+	}
+
+}

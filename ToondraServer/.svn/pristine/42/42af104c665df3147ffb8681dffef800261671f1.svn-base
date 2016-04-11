@@ -1,0 +1,27 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="decorator" uri="http://www.opensymphony.com/sitemesh/decorator"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<html>
+	<head>
+		<title>
+			<decorator:title default="Spring-SiteMesh" />
+		</title>
+		
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		
+		<script src="${pageContext.request.contextPath}/resources/js/jquery-1.11.1.min.js"></script>
+		
+		
+		<decorator:head /> 
+	</head> 
+	
+	
+	<body> 
+	
+		<div style="background-color: yellow;text-align: center;" >
+		layout----sitmesh
+		</div>
+		<!-- warp --> 
+		<decorator:body />
+	</body> 
+</html>

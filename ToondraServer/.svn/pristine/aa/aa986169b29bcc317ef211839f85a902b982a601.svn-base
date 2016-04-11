@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="API.Member">
+
+    <select id="getEmailOverlapCheck" parameterType="hashmap" resultType="java.lang.Integer">
+      	SELECT 		COUNT(member_seq)
+      	FROM		tb_member
+      	WHERE		email = #{email}
+    </select>
+    
+    <select id="loginKeyDuplicationCheck" parameterType="hashmap" resultType="java.lang.Integer">
+      	SELECT 		COUNT(member_seq)
+      	FROM		tb_member_login
+      	WHERE		login_key = #{login_key}
+    </select>
+    
+    
+    <select id="getMemberLoginCheck" parameterType="hashmap" resultType="java.lang.Integer">
+      	SELECT 		COUNT(member_seq)
+      	FROM		tb_member_login
+      	WHERE		member_seq = #{member_seq} AND device_seq = #{device_seq}
+    </select>
+    
+    <select id="getEncKey" parameterType="hashmap" resultType="java.lang.String" >
+    	SELECT 
+    				enc_key
+    	FROM 		tb_device
+    	WHERE		device_seq = #{device_seq}
+    </select>
+    
+    
+	<insert id="insertMember" parameterType="hashmap">
+		INSERT INTO tb_member
+        	(
+        		email
+				, password
+				, cert_state
+				, cert_key
+				, push_yn
+				, retention_coin
+				, reg_date
+				, upt_date
+        	)
+		VALUES
+			(
+				#{email}
+				, #{password}
+				, 'N'
+				, #{cert_key}
+				, 'N'
+				, 0
+				, NOW()
+				, CURRENT_TIMESTAMP
+			)
+	
+	</insert>
+
+
+	<select id="updateMemberConfirm" parameterType="hashmap" resultType="java.lang.Integer">
+		UPDATE 		tb_member
+		SET 		cert_state = 'Y'
+					, upt_date = CURRENT_TIMESTAMP
+					
+		WHERE 		cert_key=#{cert_key}
+	</select>
+    
+    <select id="updateMemberLogin" parameterType="hashmap" resultType="java.lang.Integer">
+		UPDATE 		tb_member_login
+		SET 		login_key = #{login_key}
+					, login_date = CURRENT_TIMESTAMP
+					
+		WHERE		member_seq = #{member_seq} AND device_seq = #{device_seq}
+	</select>
+	
+    <select id="updateMemberLogout" parameterType="java.lang.String" resultType="java.lang.Integer">
+		UPDATE 		tb_member_login
+		SET 		
+					login_key = ""
+					
+		WHERE		login_key = #{login_key}
+	</select>
+    
+    
+    
+    <select id="getMemberInfo" parameterType="hashmap" resultType="hashmap">
+    	SELECT 
+    				IFNULL(member_seq, "") AS member_seq
+    				, IFNULL(email, "") AS email
+					, IFNULL(cert_state, "") AS cert_state
+					, IFNULL(cert_key, "") AS cert_key
+					, IFNULL(push_yn, "") AS push_yn
+					
+					    				
+		FROM 		tb_member
+		WHERE 		EMAIL = #{email} AND PASSWORD = #{password}
+    </select>
+    
+    
+    <select id="getMemberSeq" parameterType="java.lang.String" resultType="java.lang.String">
+    	SELECT 
+    				IFNULL(member_seq, "") AS member_seq
+    				
+		FROM 		tb_member_login
+		WHERE 		login_key = #{loginKey}
+    </select>
+    
+    
+     <select id="getDeviceInfo" parameterType="hashmap" resultType="hashmap">
+      	SELECT 
+					device_seq
+					, device_os
+					, device_id
+					, enc_key
+					
+					
+		FROM 		tb_device
+		WHERE 		device_seq = #{device_seq}
+    </select>
+    
+    <insert id="insertMemberLogin" parameterType="hashmap">
+		INSERT INTO tb_member_login
+        	(
+        		member_seq
+        		, device_seq
+        		, login_key
+        		, login_date
+        	)
+        	
+		VALUES
+			(
+				#{member_seq}
+				, #{device_seq}
+				, #{login_key}
+				, CURRENT_TIMESTAMP
+			)
+	</insert>
+	
+	<select id="updateMemberPwChange" parameterType="hashmap" resultType="java.lang.Integer">
+		UPDATE 		tb_member
+		SET 		password = #{new_password}
+					, upt_date = CURRENT_TIMESTAMP
+					
+		WHERE 		member_seq = #{member_seq} AND password = #{now_password}
+	</select>
+	
+	<select id="updateMemberPw" parameterType="hashmap" resultType="hashmap">
+		UPDATE 		tb_member
+		SET 		password = #{password}
+					, upt_date = CURRENT_TIMESTAMP
+					
+		WHERE 		email = #{email}
+	</select>
+	
+	
+     <select id="getEncKeyFromLoginKey" parameterType="hashmap" resultType="java.lang.String" >
+		SELECT
+					DE.enc_key AS enc_key
+					
+		FROM		tb_member_login ML LEFT JOIN tb_device AS DE ON ML.device_seq = DE.device_seq
+		WHERE		ML.login_key = #{login_key}
+    </select>
+    
+    
+    <select id="updatePushState" parameterType="hashmap" resultType="java.lang.Integer">
+		UPDATE 		tb_member
+		SET 		push_yn = #{push_yn}
+					, upt_date = CURRENT_TIMESTAMP
+					
+		WHERE 		member_seq = #{member_seq}
+	</select>
+    
+</mapper>

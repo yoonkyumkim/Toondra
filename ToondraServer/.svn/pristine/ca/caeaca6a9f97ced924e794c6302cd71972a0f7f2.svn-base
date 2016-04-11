@@ -1,0 +1,58 @@
+/** ahope post css **/
+body{ 
+	overflow-x:hidden;overflow-y:hidden; 
+}
+
+table {
+	margin-bottom: 0px !important;
+}
+
+.post-wrapper-ahope {
+	text-align: center;
+}
+
+.post-tab-ahope {
+	margin: 15px 0px 15px 0px;
+}
+
+.post-table-ahope {
+	text-align: center;		
+}
+.post-table-ahope th {
+	text-align: center;
+}
+
+.post-thead-ahope{
+	display: block;
+	background-color: #eee;
+}
+.post-thead-ahope tr th:first-child {
+	width: 120px;
+}
+.post-thead-ahope tr th:last-child {
+	width: 340px;
+}
+.post-tbody-ahope{
+    display: block;
+    height: 130px;
+    overflow-y: auto; 
+    overflow-x: hidden;
+}
+.post-tbody-ahope tr td:first-child {
+	width: 120px;
+}
+.post-tbody-ahope tr td:last-child {
+	width: 340px;
+}
+.post-tbody-ahope tr {
+	cursor: pointer;
+}
+.post-addr-ahope {
+	padding-top:15px;
+	padding-bottom:15px;
+	background-color: #eee;
+	text-align: center;
+}
+.post-addr-detail-ahope {
+	margin: 5px;
+}

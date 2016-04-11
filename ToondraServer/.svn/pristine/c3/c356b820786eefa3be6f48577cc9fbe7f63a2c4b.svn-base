@@ -1,0 +1,69 @@
+package kr.co.toondra.web.community.service;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+
+import javax.servlet.http.HttpSession;
+
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.community.dao.FAQDao;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class FAQService {
+
+	@Autowired
+	private FAQDao dao;
+
+	public HashMap<String, Object> getFAQList(PMap pMap) {
+
+		HashMap<String, Object> result = new HashMap<String, Object>();
+
+		int faqListCount = dao.getFAQListCount(pMap);
+		List<HashMap<String, Object>> faqList = dao.getFAQList(pMap);
+
+		result.put("iTotalRecords", faqListCount);
+		result.put("iTotalDisplayRecords", faqListCount);
+		result.put("aaData", faqList);
+
+		return result;
+	}
+
+	public HashMap<String, Object> getFAQ(PMap pMap) {
+		return dao.getFAQ(pMap);
+	}
+
+	public int insertFAQ(PMap pMap) throws Exception {
+
+		HttpSession session = pMap.getRequest().getSession();
+		pMap.put("managerSeq", session.getAttribute("s_manager_seq"));
+
+		return dao.insertFAQ(pMap);
+	}
+
+	public int updateFAQ(PMap pMap) throws Exception {
+
+		HttpSession session = pMap.getRequest().getSession();
+		pMap.put("managerSeq", session.getAttribute("s_manager_seq"));
+
+		return dao.updateFAQ(pMap);
+	}
+
+	public int deleteFAQ(PMap pMap) throws Exception {
+
+		List<String> faqSeqList = Arrays.asList(pMap.getString("faqSeqStr").split("\\|"));
+
+		return dao.deleteFAQ(faqSeqList);
+	}
+
+	public int updateFAQPost(PMap pMap) {
+
+		List<String> faqSeqList = Arrays.asList(pMap.getString("faqSeqStr").split("\\|"));
+		pMap.put("list", faqSeqList);
+		return dao.updateFAQPost(pMap);
+	}
+
+}

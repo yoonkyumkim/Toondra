@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="Stats">
+    <sql id="statsWhere">
+    	WHERE 1 = 1
+    	<choose>
+    		<when test='startRegDate != "" and endRegDate == ""'>
+		  		<![CDATA[
+	    			AND	purchase_date LIKE CONCAT(#{startRegDate},'%')
+	    		]]>
+    		</when>
+    		<when test='startRegDate != "" and endRegDate != ""'>
+				AND purchase_date 
+					BETWEEN STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+					AND STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+    		</when>
+    	</choose>
+    </sql>
+    <sql id="viewsWhere">
+    	WHERE 1 = 1
+    	<choose>
+    		<when test='startRegDate != "" and endRegDate == ""'>
+		  		<![CDATA[
+	    			AND	views_date LIKE CONCAT(#{startRegDate},'%')
+	    		]]>
+    		</when>
+    		<when test='startRegDate != "" and endRegDate != ""'>
+				AND views_date 
+					BETWEEN STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+					AND STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+    		</when>
+    	</choose>
+    </sql>
+    <sql id="contentWhere">
+       <if test='gubun == "author_id"'>
+            <if test='search_param != null and search_param != ""' >
+            	AND (author.author_id LIKE CONCAT('%',#{search_param},'%'))
+        	</if>
+        </if>
+        <if test='gubun == "author_name"'>
+            <if test='search_param != null and search_param != ""' >
+            	AND (author.author_name LIKE CONCAT('%',#{search_param},'%'))
+        	</if>
+        </if>
+        <if test='fin_yn != null and fin_yn != ""'>
+    		AND	tw.fin_yn = #{fin_yn}
+    	</if>
+    	 <if test='day != null and day != ""'>
+    		AND	days.days LIKE CONCAT('%',#{day},'%')
+    	</if>
+    	 <if test='genre_seq != null and genre_seq != ""'>
+    		AND genre.genre_seq LIKE CONCAT('%',#{genre_seq},'%')
+    	</if>
+    	 <if test='work_name != null and work_name != ""'>
+    		AND	tw.work_name LIKE CONCAT('%',#{work_name},'%')
+    	</if>
+    </sql>
+    <sql id="order">
+        <if test='purchase == "desc"'>
+            ORDER BY purchase.purchase_count DESC
+        </if>
+        <if test='purchase == "asc"'>
+            ORDER BY purchase.purchase_count ASC
+        </if>
+        <if test='coin == "desc"'>
+            ORDER BY purchase.purchase_coin DESC
+        </if>
+        <if test='coin == "asc"'>
+            ORDER BY purchase.purchase_coin ASC
+        </if>
+    </sql>
+    
+    
+    <select id="getStatsList" parameterType="hashmap" resultType="hashmap">
+        SELECT tm.email AS email,CONCAT(email,' - (',SUM(tcp.purchase_amt),'원)') AS amount, A.total AS total
+		FROM tb_member tm INNER JOIN tb_coin_purchase tcp
+				  		  ON tm.member_seq = tcp.member_seq
+				  		  INNER JOIN (SELECT SUM(purchase_amt) AS total
+										FROM tb_coin_purchase
+										<include refid="statsWhere"/>
+										) A
+						  ON 1 = 1
+		<include refid="statsWhere"/>
+		GROUP BY tcp.member_seq
+		ORDER BY SUM(tcp.purchase_amt) DESC
+		<if test='iDisplayStart != null and iDisplayLength != null'>
+		LIMIT #{iDisplayStart}, #{iDisplayLength}
+		</if>
+    </select>
+    <select id="getStatsTotalCnt" parameterType="hashmap" resultType="Integer">
+        SELECT COUNT(*)
+		FROM (SELECT tm.email
+			FROM tb_member tm INNER JOIN tb_coin_purchase tcp
+					  ON tm.member_seq = tcp.member_seq
+			<include refid="statsWhere"/>
+			GROUP BY tcp.member_seq) A
+    </select>
+    
+    <select id="getContentStatsTotalCnt" parameterType="hashmap" resultType="Integer">
+        SELECT COUNT(*)
+		FROM (
+        SELECT  tw.work_seq
+				,tw.work_name AS work_name
+				,days.days AS days
+				,CASE tw.fin_yn 
+					WHEN 'Y' THEN '완결'
+					WHEN 'N' THEN '연재'
+				END AS fin_yn
+				,tw.reg_date AS reg_date
+				,IFNULL(purchase.purchase_coin, '0') AS purchase_coin
+				,IFNULL(purchase.purchase_count, '0') AS purchase_count
+				,IFNULL(views.view_count, '0') AS view_count
+			FROM tb_work tw LEFT OUTER JOIN tb_content tc
+							ON tw.work_seq  = tc.work_seq 
+							LEFT OUTER JOIN (SELECT tw.work_seq AS work_seq 
+										,GROUP_CONCAT(DISTINCT CASE twd.day 
+													WHEN '1' THEN '월' 
+													WHEN '2' THEN '화' 
+													WHEN '3' THEN '수' 
+													WHEN '4' THEN '목' 
+													WHEN '5' THEN '금' 
+													WHEN '6' THEN '토' 
+													WHEN '7' THEN '일' 
+													END ORDER BY twd.day ASC) AS days 
+									FROM tb_work tw INNER JOIN tb_work_day twd
+											ON tw.work_seq = twd.work_seq
+									GROUP BY tw.work_seq) days
+							ON tw.work_seq = days.work_seq
+							LEFT OUTER JOIN (SELECT tw.work_seq
+												,SUM(tcp.purchase_coin) AS purchase_coin
+												,COUNT(*) AS purchase_count
+										FROM tb_work tw INNER JOIN tb_content tc
+														ON tw.work_seq  = tc.work_seq 
+														INNER JOIN tb_content_purchase tcp
+														ON tc.content_seq = tcp.content_seq
+										<include refid="statsWhere"/>
+										GROUP BY tw.work_seq) purchase
+							ON tw.work_seq = purchase.work_seq
+							LEFT OUTER JOIN (SELECT tw.work_seq
+													,COUNT(*) AS view_count
+											FROM tb_work tw	INNER JOIN tb_member_work_views tmwv
+															ON tw.work_seq = tmwv.work_seq
+											<include refid="viewsWhere"/>
+											GROUP BY tw.work_seq) views
+							ON tw.work_seq = views.work_seq
+							LEFT OUTER JOIN (SELECT  tw.work_seq AS work_seq
+											,GROUP_CONCAT(author_id) AS author_id
+											,GROUP_CONCAT(author_name) AS author_name
+										FROM tb_work tw INNER JOIN tb_work_author twa
+												ON tw.work_seq = twa.work_seq
+												INNER JOIN tb_author ta 
+												ON twa.author_seq = ta.author_seq
+										GROUP BY tw.work_seq) author
+							ON tw.work_seq = author.work_seq
+							LEFT OUTER JOIN (SELECT tw.work_seq AS work_seq, GROUP_CONCAT(twg.genre_seq) genre_seq
+									   FROM tb_work tw INNER JOIN tb_work_genre twg
+											   ON tw.work_seq = twg.work_seq
+									   GROUP BY tw.work_seq ) genre
+							ON tw.work_seq = genre.work_seq
+			WHERE tw.del_yn = 'N'
+			<include refid="contentWhere" />
+			GROUP BY tw.work_seq 
+			) A
+			
+    </select>
+    
+    <select id="getContentStatsList" parameterType="hashmap" resultType="hashmap">
+        SELECT  tw.work_seq
+				,tw.work_name AS work_name
+				,author.author_id AS author_id
+				,author.author_name AS author_name
+				,IFNULL(days.days, '') AS days
+				,CASE tw.fin_yn 
+					WHEN 'Y' THEN '완결'
+					WHEN 'N' THEN '연재'
+				END AS fin_yn
+				,IFNULL(DATE_FORMAT(tw.reg_date, '%Y-%m-%d'), ' ') AS reg_date
+				,IFNULL(purchase.purchase_coin, '0') AS purchase_coin
+				,IFNULL(purchase.purchase_count, '0') AS purchase_count
+				,IFNULL(views.view_count, '0') AS view_count
+			FROM tb_work tw LEFT OUTER JOIN tb_content tc
+							ON tw.work_seq  = tc.work_seq 
+							LEFT OUTER JOIN tb_work_day twd
+							ON tw.work_seq = twd.work_seq
+							LEFT OUTER JOIN (SELECT tw.work_seq AS work_seq 
+										,GROUP_CONCAT(DISTINCT CASE twd.day 
+													WHEN '1' THEN '월' 
+													WHEN '2' THEN '화' 
+													WHEN '3' THEN '수' 
+													WHEN '4' THEN '목' 
+													WHEN '5' THEN '금' 
+													WHEN '6' THEN '토' 
+													WHEN '7' THEN '일' 
+													END ORDER BY twd.day ASC) AS days 
+									FROM tb_work tw INNER JOIN tb_work_day twd
+											ON tw.work_seq = twd.work_seq
+									GROUP BY tw.work_seq) days
+							ON tw.work_seq = days.work_seq
+							LEFT OUTER JOIN (SELECT tw.work_seq
+												,SUM(tcp.purchase_coin) AS purchase_coin
+												,COUNT(*) AS purchase_count
+										FROM tb_work tw INNER JOIN tb_content tc
+														ON tw.work_seq  = tc.work_seq 
+														INNER JOIN tb_content_purchase tcp
+														ON tc.content_seq = tcp.content_seq
+										<include refid="statsWhere"/>
+										GROUP BY tw.work_seq) purchase
+							ON tw.work_seq = purchase.work_seq
+							LEFT OUTER JOIN (SELECT tw.work_seq
+													,COUNT(*) AS view_count
+											FROM tb_work tw	INNER JOIN tb_member_work_views tmwv
+															ON tw.work_seq = tmwv.work_seq
+											<include refid="viewsWhere"/>
+											GROUP BY tw.work_seq) views
+							ON tw.work_seq = views.work_seq
+							LEFT OUTER JOIN (SELECT  tw.work_seq AS work_seq
+											,GROUP_CONCAT(author_id) AS author_id
+											,GROUP_CONCAT(author_name) AS author_name
+										FROM tb_work tw INNER JOIN tb_work_author twa
+												ON tw.work_seq = twa.work_seq
+												INNER JOIN tb_author ta 
+												ON twa.author_seq = ta.author_seq
+										GROUP BY tw.work_seq) author
+							ON tw.work_seq = author.work_seq
+							LEFT OUTER JOIN (SELECT tw.work_seq AS work_seq, GROUP_CONCAT(twg.genre_seq) genre_seq
+									   FROM tb_work tw INNER JOIN tb_work_genre twg
+											   ON tw.work_seq = twg.work_seq
+									   GROUP BY tw.work_seq ) genre
+							ON tw.work_seq = genre.work_seq
+			WHERE tw.del_yn = 'N'
+			<include refid="contentWhere" />
+			GROUP BY tw.work_seq
+			<include refid="order" />
+			<if test='iDisplayStart != null and iDisplayLength != null'>
+			LIMIT #{iDisplayStart}, #{iDisplayLength}
+			</if>
+    </select>
+    
+    <select id="genreList"  resultType="hashmap">
+        SELECT genre_name
+        	,genre_seq
+		FROM tb_genre;
+    </select>
+</mapper>

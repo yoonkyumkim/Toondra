@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="Stats">
+    <sql id="statsWhere">
+    	WHERE 1 = 1
+    	<choose>
+    		<when test='startRegDate != "" and endRegDate == ""'>
+		  		<![CDATA[
+	    			AND	purchase_date >= STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startRegDate == "" and endRegDate != ""'>
+    			<![CDATA[
+	    			AND	purchase_date <= STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startRegDate != "" and endRegDate != ""'>
+				AND purchase_date 
+					BETWEEN STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+					AND STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+    		</when>
+    	</choose>
+    </sql>
+    
+    
+    <select id="getStatsList" parameterType="hashmap" resultType="hashmap">
+        SELECT tm.email AS email,CONCAT(email,' - (',SUM(tcp.purchase_amt),'원)') AS amount, A.total AS total
+		FROM tb_member tm INNER JOIN tb_coin_purchase tcp
+				  		  ON tm.member_seq = tcp.member_seq
+				  		  INNER JOIN (SELECT SUM(purchase_amt) AS total
+										FROM tb_coin_purchase
+										<include refid="statsWhere"/>
+										) A
+						  ON 1 = 1
+		<include refid="statsWhere"/>
+		GROUP BY tcp.member_seq
+		ORDER BY SUM(tcp.purchase_amt) DESC
+		<if test='iDisplayStart != null and iDisplayLength != null'>
+		LIMIT #{iDisplayStart}, #{iDisplayLength}
+		</if>
+    </select>
+    <select id="getStatsTotalCnt" parameterType="hashmap" resultType="Integer">
+        SELECT COUNT(*)
+		FROM (SELECT tm.email
+			FROM tb_member tm INNER JOIN tb_coin_purchase tcp
+					  ON tm.member_seq = tcp.member_seq
+			<include refid="statsWhere"/>
+			GROUP BY tcp.member_seq) A
+    </select>
+</mapper>

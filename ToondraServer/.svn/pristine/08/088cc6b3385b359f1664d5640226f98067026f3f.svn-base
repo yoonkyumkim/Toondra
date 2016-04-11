@@ -1,0 +1,168 @@
+package kr.co.toondra.web.stats.view;
+
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFFont;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.util.CellRangeAddress;
+import org.apache.poi.hssf.util.HSSFColor;
+import org.springframework.web.servlet.view.document.AbstractExcelView;
+
+@SuppressWarnings("deprecation")
+public class ContentExcelView extends AbstractExcelView {
+
+	@Override
+	protected void buildExcelDocument(Map<String, Object> model,HSSFWorkbook wb, HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+		// 현재날짜
+		Date now = new Date();
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		String today = sdf.format(now);
+
+		// 파일명
+		String excelFileName = URLEncoder.encode("컨텐츠_통계", "UTF-8");
+		response.setHeader("Content-Disposition", "ATTachment; Filename=" + excelFileName + "_" + today + ".xls");
+
+		HSSFCell cell = null;
+		// 엑셀시트 제목
+		HSSFSheet sheet1 = wb.createSheet();
+		wb.setSheetName(0, "컨텐츠 통계");
+		// 제목 스타일
+		HSSFCellStyle titleStyle = wb.createCellStyle();
+		// 폰트
+		HSSFFont font = wb.createFont();
+
+		// 병합
+		sheet1.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+		cell = getCell(sheet1, 0, 0);
+		setText(cell, "컨텐츠 통계");
+		font.setFontHeightInPoints((short) 12);
+		font.setColor((short) HSSFColor.BLACK.index);
+		font.setBoldweight(HSSFFont.BOLDWEIGHT_BOLD);
+		titleStyle.setFont(font);
+		titleStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+		cell.setCellStyle(titleStyle);
+
+		// 헤더 셀 스타일
+		HSSFCellStyle headerStyle = wb.createCellStyle();
+
+
+		// 배경색
+		headerStyle.setFillForegroundColor(HSSFColor.GREY_25_PERCENT.index);
+		headerStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+
+		// 테두리
+		headerStyle.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+		headerStyle.setBottomBorderColor(HSSFColor.BLACK.index);
+		headerStyle.setBorderLeft(HSSFCellStyle.BORDER_THIN);
+		headerStyle.setLeftBorderColor(HSSFColor.BLACK.index);
+		headerStyle.setBorderRight(HSSFCellStyle.BORDER_THIN);
+		headerStyle.setRightBorderColor(HSSFColor.BLACK.index);
+		headerStyle.setBorderTop(HSSFCellStyle.BORDER_THIN);
+		headerStyle.setTopBorderColor(HSSFColor.BLACK.index);
+		headerStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+
+		getCell(sheet1, 2, 0).setCellStyle(headerStyle);
+		sheet1.autoSizeColumn((short) 1);
+
+		String startRegDate = model.get("startRegDate").toString();
+		String endRegDate = model.get("endRegDate").toString();
+		if(endRegDate.equals("")){
+			setText(getCell(sheet1, 0, 4), startRegDate);
+		} else {
+			setText(getCell(sheet1, 0, 4), startRegDate + " ~ " + endRegDate);
+		}
+
+		setText(getCell(sheet1, 2, 0), "순위");
+		setText(getCell(sheet1, 2, 1), "작품명");
+		setText(getCell(sheet1, 2, 2), "작가");
+		setText(getCell(sheet1, 2, 3), "작가ID");
+		setText(getCell(sheet1, 2, 4), "작품 뷰 횟수");
+		setText(getCell(sheet1, 2, 5), "작품 구매 횟수");
+		setText(getCell(sheet1, 2, 6), "작품 구매 코인");
+		setText(getCell(sheet1, 2, 7), "요일");
+		setText(getCell(sheet1, 2, 8), "완결/연재");
+		setText(getCell(sheet1, 2, 9), "등록일");
+
+		@SuppressWarnings("unchecked")
+		List<HashMap<String, Object>> list = (List<HashMap<String, Object>>) model.get("aaData");
+
+		// 일반 셀 스타일
+		HSSFCellStyle cellstyle = wb.createCellStyle();
+		cellstyle.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+		cellstyle.setBottomBorderColor(HSSFColor.BLACK.index);
+		cellstyle.setBorderLeft(HSSFCellStyle.BORDER_THIN);
+		cellstyle.setLeftBorderColor(HSSFColor.BLACK.index);
+		cellstyle.setBorderRight(HSSFCellStyle.BORDER_THIN);
+		cellstyle.setRightBorderColor(HSSFColor.BLACK.index);
+		cellstyle.setBorderTop(HSSFCellStyle.BORDER_THIN);
+		cellstyle.setTopBorderColor(HSSFColor.BLACK.index);
+		cellstyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+
+		for (int i = 0; i < list.size(); i++) {
+			HashMap<String, Object> data = (HashMap<String, Object>) list.get(i);
+
+			// 0번째 컬럼
+			cell = getCell(sheet1, 3 + i, 0);
+			setText(cell, Integer.toString(i + 1));
+			cell.setCellStyle(cellstyle);
+
+			// 1번째 컬럼
+			cell = getCell(sheet1, 3 + i, 1);
+			setText(cell, data.get("work_name").toString());
+			cell.setCellStyle(cellstyle);
+			
+			cell = getCell(sheet1, 3 + i, 2);
+			setText(cell, data.get("author_name").toString());
+			cell.setCellStyle(cellstyle);
+			
+			cell = getCell(sheet1, 3 + i, 3);
+			setText(cell, data.get("author_id").toString());
+			cell.setCellStyle(cellstyle);
+			
+			cell = getCell(sheet1, 3 + i, 4);
+			setText(cell, data.get("view_count").toString());
+			cell.setCellStyle(cellstyle);
+			
+			cell = getCell(sheet1, 3 + i, 5);
+			setText(cell, data.get("purchase_count").toString());
+			cell.setCellStyle(cellstyle);
+			
+			cell = getCell(sheet1, 3 + i, 6);
+			setText(cell, data.get("purchase_coin").toString());
+			cell.setCellStyle(cellstyle);
+			
+			cell = getCell(sheet1, 3 + i, 7);
+			setText(cell, data.get("days").toString());
+			cell.setCellStyle(cellstyle);
+			
+			cell = getCell(sheet1, 3 + i, 8);
+			setText(cell, data.get("fin_yn").toString());
+			cell.setCellStyle(cellstyle);
+			
+			cell = getCell(sheet1, 3 + i, 9);
+			setText(cell, data.get("reg_date").toString());
+			cell.setCellStyle(cellstyle);
+
+		}
+		
+		// 자동 컬럼 너비
+		for (int i = 1; i < 10; i++) {
+			getCell(sheet1, 2, i).setCellStyle(headerStyle);
+			sheet1.autoSizeColumn((short) i);
+			sheet1.setColumnWidth(i, sheet1.getColumnWidth(i) + 2000);
+		}
+
+	}
+}

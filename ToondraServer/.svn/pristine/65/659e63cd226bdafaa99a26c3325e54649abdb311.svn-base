@@ -1,0 +1,75 @@
+package kr.co.toondra.api.member.service;
+
+import java.util.HashMap;
+import java.util.UUID;
+
+import kr.co.toondra.api.bean.Result;
+import kr.co.toondra.api.member.dao.MemberDao;
+import kr.co.toondra.common.util.Hash;
+import kr.co.toondra.common.util.MailSender;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+
+@Service("apiMemberService")
+public class MemberService {
+	
+	@Autowired
+	private MemberDao dao;
+	
+	@Autowired
+	private MailSender sender;
+	
+	public Result insertMember(HashMap<String, Object> param) throws Exception {
+
+		Result result = new Result();
+		
+		if(param != null) {
+			
+			//이메일 중복 확인
+			if(dao.getEmailOverlapCheck(param) == 0){
+
+				String certKey = UUID.randomUUID().toString().replace("-", "");
+				
+				param.put("certKey", certKey);
+				
+				String pwd = Hash.sha512((String)param.get("password"));
+				
+				param.put("password", pwd);
+
+				//회원 가입
+				dao.insertMember(param);
+				
+				
+				//Email전송
+				sender.sendSmtpGMail("pparbk@ahope.co.kr"
+						, "Toondra 회원가입 인증 이메일입니다."
+						, "Toondra 회원가입 인증 이메일 입니다<html><head><title>Home</title></head><body><br><a href=\"http://localhost:8080/api/member/confirm?certKey="+certKey+"\">인증 하기</a>를 클릭해주세요</body></html>");
+				
+			} else {
+				result.setResp_code("400");
+			}
+		}
+		
+		return result;
+	}
+	
+	
+	
+	public int updateMemberConfirm(HashMap<String, Object> param) throws Exception {
+		
+		if(param != null && dao.updateMemberConfirm(param) != 0){
+			
+		}else{
+			//실패
+			return 0;
+		}
+		
+		return 1;
+	}
+	
+	
+	
+
+}

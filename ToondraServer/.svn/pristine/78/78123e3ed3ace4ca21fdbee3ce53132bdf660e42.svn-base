@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="Genre">
+    
+    <select id="getGenreList" resultType="hashmap">
+        SELECT	genre_seq AS "genreSeq"
+        	  	,genre_name AS "genreName"
+        FROM 	tb_genre
+        WHERE	del_yn = 'N'
+        ORDER BY genre_seq
+    </select>
+
+	<insert id="insertGenre" parameterType="hashmap">
+		INSERT INTO tb_genre
+					(
+					genre_name
+					,reg_date
+					)
+		VALUES		(
+					#{genreName}
+					,NOW()
+					)
+	</insert>
+	
+	<update id="updateGenre" parameterType="hashmap">
+		UPDATE	tb_genre
+		SET		genre_name = #{genreName}
+				,upt_date = NOW()
+		WHERE	genre_seq = #{genreSeq}
+	</update>
+	
+	<update id="deleteGenre" parameterType="hashmap">
+		UPDATE	tb_genre
+		SET		del_yn = 'Y'
+				,upt_date = NOW()
+		WHERE	genre_seq = #{genreSeq}
+	</update>
+	
+	<select id="getGenreWorkCount" parameterType="list" resultType="integer" >
+		SELECT	COUNT(work_seq) AS genreCnt
+		FROM	tb_work_genre
+		WHERE	genre_seq IN
+		<foreach collection="list" item="genre" index="index" separator="," open="(" close=")">
+           #{genre.genreSeq}
+        </foreach>
+	</select>
+    
+</mapper>

@@ -1,0 +1,38 @@
+package kr.co.toondra.api.image.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.api.image.service.ToonViewService;
+import kr.co.toondra.common.collection.PMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+@Controller
+public class ToonViewController {
+	
+	@Autowired
+	ToonViewService service  = new ToonViewService();
+
+	@RequestMapping(value="/api/thumbnail/{work_seq}/{image}", method=RequestMethod.GET)
+	public ResponseEntity<byte[]> thumbnailView(@PathVariable String image,@PathVariable String work_seq,HttpServletRequest request) {
+		
+		PMap pMap = new PMap(request);
+		pMap.put("img", image);
+		pMap.put("work_seq", work_seq);
+		byte[] img = service.getImage(pMap);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.IMAGE_JPEG);
+		return new ResponseEntity<byte[]>(img, headers, HttpStatus.OK);
+	}
+	
+
+
+}

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="API.Device">
+
+    <select id="getDeviceIdOverlapCheck" parameterType="hashmap" resultType="java.lang.Integer">
+      	SELECT 		COUNT(device_seq)
+      	FROM		tb_device
+      	WHERE		device_id = #{device_id}
+    </select>
+    
+    
+     <select id="updateDeviceInfo" parameterType="hashmap" resultType="java.lang.Integer">
+		UPDATE 		tb_device
+		SET 		
+					device_os = #{device_os}
+					, enc_key = #{enc_key}
+					
+		WHERE		device_id = #{device_id}
+	</select>
+    
+    <insert id="insertDeviceInfo" parameterType="hashmap">
+		INSERT INTO tb_device
+        	(
+        		device_os
+        		, device_id
+        		, enc_key
+        	)
+		VALUES
+			(
+				#{device_os}
+				, #{device_id}
+				, #{enc_key}
+			)
+	
+	</insert>
+	
+	
+	<select id="getDeviceInfo" parameterType="hashmap" resultType="hashmap">
+      	SELECT 		
+					*
+      	FROM		tb_device
+      	WHERE		device_id = #{device_id}
+    </select>
+    
+</mapper>

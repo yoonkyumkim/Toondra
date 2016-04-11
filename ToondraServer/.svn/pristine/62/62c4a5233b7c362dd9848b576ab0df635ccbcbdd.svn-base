@@ -1,0 +1,76 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=EUC-KR">
+		<title>로그인</title>
+	</head>
+	<script src="${pageContext.request.contextPath}/resources/js/jquery-1.11.2.min.js" type="text/javascript"></script>
+	<script type="text/javascript">
+	function login(){
+		if(document.getElementById("idSaveCheck").checked) {
+			setCookie("saveId" ,document.getElementById("id").value, 7);
+		} else {
+			deleteCookie("saveId");
+		}
+		var form = document.getElementById("loginForm");
+		form.submit();
+	}
+	$(document).ready(function(){
+		var saveId = getCookie("saveId");
+		$("#id").val(saveId);
+		if($("#id").val() != "" ){
+			$("#idSaveCheck").attr("checked", true);
+		}
+	});
+	
+	function setCookie(cookieName ,value, saveday){
+		var exdate = new Date();
+		exdate.setDate(exdate.getDate() + saveday);
+		var cookieValue = escape(value) + ((saveday==null) ? "" : "; expires=" + exdate.toGMTString());
+		document.cookie = cookieName + "=" + cookieValue;
+	}
+	
+	function deleteCookie(cookieName){
+		var expireDate = new Date();
+		expireDate.setDate(expireDate.getDate() - 1 );
+		document.cookie = cookieName + "= " + "; expires=" + expireDate.toGMTString();
+	}
+	
+	function getCookie(cookieName) {
+		cookieName = cookieName + "=";
+		var cookieData = document.cookie;
+		var start = cookieData.indexOf(cookieName);
+		var cookieValue = "";
+		
+		if(start != -1) {
+			start += cookieName.length;
+			var end = cookieData.indexOf(';', start);
+			if(end == -1) end = cookieData.length;
+			cookieValue = cookieData.substring(start, end);
+		}
+		return unescape(cookieValue);
+	}
+	
+	</script>
+<body>
+<form id="loginForm" method="post" action="${pageContext.request.contextPath }/admin/login/loginDo">
+	<table>
+		<tr>
+			<td>ID</td>
+			<td><input type="text" name="id" id="id" /></td>
+			<td rowspan="2"><input type="button" value="Login" onclick="login()"></td>
+		</tr>
+		<tr>
+			<td>PASS</td>
+			<td><input type="password" name="password" id="password" /></td>
+		</tr>
+		<tr>
+			<td></td>
+			<td><input type="checkbox" id="idSaveCheck" >아이디 저장</td>
+		</tr>
+	</table>
+</form>
+</body>
+</html>

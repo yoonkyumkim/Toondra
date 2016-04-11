@@ -1,0 +1,28 @@
+package kr.co.toondra.api.community.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.api.common.BaseController;
+import kr.co.toondra.api.community.service.FAQService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping("/api")
+@Controller("apiFAQController")
+public class FAQController extends BaseController {
+
+	@Autowired
+	private FAQService service;
+	
+	@RequestMapping("/faq")
+	public String faqList(HttpServletRequest req, Model model) {
+		
+		model.addAttribute("result", service.getFAQList());
+
+		return "jacksonView";
+	}
+
+}

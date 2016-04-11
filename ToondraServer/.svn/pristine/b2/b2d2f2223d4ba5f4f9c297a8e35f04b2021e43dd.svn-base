@@ -1,0 +1,58 @@
+package kr.co.toondra.web.community.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.base.controller.BaseController;
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.community.service.InquiryService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping("/admin/community/inquiry")
+@Controller
+public class InquiryController extends BaseController {
+
+	@Autowired
+	private InquiryService service;
+
+	@RequestMapping("/inquiryListView")
+	public String inquiryListView(Model model) {
+		
+		model.addAttribute("codeList", service.getInquiryCategory());
+		
+		return "toondra/community/inquiry/inquiryList";
+	}
+
+	@RequestMapping("/inquiryList")
+	public String inquiryList(HttpServletRequest req, Model model) {
+		
+		PMap pMap = new PMap(req);
+		
+		pMap.put("iDisplayStart", pMap.getInt("iDisplayStart"));
+		pMap.put("iDisplayLength", pMap.getInt("iDisplayLength"));
+		
+		model.addAllAttributes(service.getInquiryList(pMap));
+		
+		return JSON_VIEW;
+	}
+	
+	@RequestMapping("/inquiryDetail")
+	public String inquiryDetail(HttpServletRequest req, Model model) {
+		
+		model.addAllAttributes(service.getInquiry(new PMap(req)));
+		
+		return "toondra/community/inquiry/inquiryDetail";
+	}
+
+	@RequestMapping("/answerInquiry")
+	public String answerInquiry(HttpServletRequest req, Model model) throws Exception {
+		
+		service.answerInquiry(new PMap(req));
+		model.addAttribute("result", true);
+		
+		return JSON_VIEW;
+	}
+}

@@ -1,0 +1,38 @@
+package kr.co.toondra.api.work.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import kr.co.toondra.api.bean.Result;
+import kr.co.toondra.api.work.dao.WorkDao;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service("apiWorkService")
+public class WorkService {
+
+	@Autowired
+	private WorkDao dao;
+	
+	public Result getWorkList(HashMap<String, Object> param) {
+		
+		Result result = new Result();
+		
+		List<HashMap<String, Object>> workList = new ArrayList<HashMap<String, Object>>();
+		
+		int workTotalCnt = 0;
+		
+		workTotalCnt = dao.getWorkTotalCnt(param);
+		workList = dao.getWorkList(param);
+	
+		
+		result.putObject("total_cnt", workTotalCnt);
+		result.putObject("work_list", workList);
+		
+		
+		return result;
+	}
+	
+}

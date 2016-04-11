@@ -1,0 +1,22 @@
+package kr.co.toondra.api.work.dao;
+
+import java.util.HashMap;
+import java.util.List;
+
+import kr.co.toondra.base.dao.BaseDao;
+
+import org.springframework.stereotype.Repository;
+
+@Repository("apiWorkDao")
+public class WorkDao extends BaseDao {
+	
+	
+	public List<HashMap<String, Object>> getWorkList(HashMap<String, Object> param) {
+		return selectList("API.Work.workList", param);
+	}
+	
+	public int getWorkTotalCnt(HashMap<String, Object> param) {
+		return selectOne("API.Work.workTotalCnt", param);
+	}
+	
+}

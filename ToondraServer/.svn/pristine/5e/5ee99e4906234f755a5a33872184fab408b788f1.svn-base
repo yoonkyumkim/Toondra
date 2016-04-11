@@ -1,0 +1,22 @@
+package kr.co.toondra.web.author.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.base.controller.BaseController;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping(value="/admin/author")
+@Controller
+public class AuthorController extends BaseController {
+		
+	@RequestMapping(value="/listView")
+	public String AuthorListView(HttpServletRequest request){
+		logger.debug("[ST][/AuthorListView]");
+		logger.debug("[ED][/AuthorListView]");
+		
+		return "toondra/author/authorListView";
+	}
+
+}

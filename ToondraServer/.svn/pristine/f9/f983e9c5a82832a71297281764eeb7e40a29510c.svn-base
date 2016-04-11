@@ -1,0 +1,39 @@
+package common.dao;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+
+public class CommonSqlSessionFactory {
+private SqlSessionFactory sqlSessionFactory;
+	
+	private static CommonSqlSessionFactory instance;
+	
+	private CommonSqlSessionFactory() throws IOException {
+		Properties props = new Properties();
+		props.load(Resources.getResourceAsStream("config/config.properties"));
+		
+		String resource = "config/mybatis-config.xml";
+		InputStream inputStream = Resources.getResourceAsStream(resource);
+		sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream, props);
+		
+		
+	}
+	
+	public static CommonSqlSessionFactory getInstance() throws IOException {
+		if(instance == null) {
+			instance = new CommonSqlSessionFactory();
+		}
+		return instance;
+	}
+	
+	public SqlSessionFactory getSqlSessionFactory() {
+		return this.sqlSessionFactory;
+		
+	}
+
+}

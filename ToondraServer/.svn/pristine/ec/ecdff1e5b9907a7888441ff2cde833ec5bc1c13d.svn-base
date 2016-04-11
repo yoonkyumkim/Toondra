@@ -1,0 +1,245 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+ <% response.setContentType("text/html; charset=utf-8"); %>
+<!DOCTYPE html>
+<html>
+<head>
+<title>ContentList</title>
+
+<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/datepicker.css" >
+<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/jquery-ui.min.css" >
+
+<script type="text/javascript" src="${pageContext.request.contextPath}/resources/js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/resources/js/bootstrap-datepicker.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/resources/js/moment.js"></script>
+
+<script type="text/javascript">
+var datepick = '<input type="text" id="weekpicker" required="required"/>';
+	$(function(){
+		tableInit();
+		daypicker();
+		
+		
+		
+	    
+		$('#search_btn').click(function(){
+			bindTable();
+		});
+		$('#excel_btn').click(function(){
+			excelDown();
+		});
+		$('#dayBtn').click(function(){
+			daypicker();
+		});
+		$('#weekBtn').click(function(){
+			weekpicker();
+		});
+		$('#monthBtn').click(function(){
+			monthpicker();
+		});
+	});
+	function daypicker() {
+		$("#date").empty();
+		$("#date").append(datepick);
+		$("#weekpicker").datepicker({
+			showOn: "both", 
+			buttonText: '<i class="fa fa-calendar cal-btn-ahope"></i>'
+		});
+	}
+	function weekpicker(){
+		$("#date").empty();
+		$("#weekpicker").remove();
+		$("#date").append(datepick);
+		var startDate;
+	    var endDate;
+	    
+	    var selectCurrentWeek = function() {
+	        window.setTimeout(function () {
+	            $('#weekpicker').datepicker('widget').find('.ui-datepicker-current-day a').addClass('ui-state-active')
+	        }, 1);
+	    }
+		$("#weekpicker").datepicker({
+			showOtherMonths: false,
+		    selectOtherMonths: false,
+			showOn: "both", 
+			buttonText: '<i class="fa fa-calendar cal-btn-ahope"></i>',
+		    onSelect: function(dateText, inst) { 
+	            var date = $(this).datepicker('getDate');
+	            startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
+	            endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay() + 6);
+	            var dateFormat = inst.settings.dateFormat || $.datepicker._defaults.dateFormat;
+	            $('#weekpicker').val($.datepicker.formatDate( dateFormat, startDate, inst.settings )
+	                 + ' - ' + $.datepicker.formatDate( dateFormat, endDate, inst.settings ));
+	            selectCurrentWeek();
+	         
+	        },
+	        beforeShow: function() {
+	            selectCurrentWeek();
+	        },
+	        beforeShowDay: function(date) {
+	            var cssClass = '';
+	            if(date >= startDate && date <= endDate)
+	                cssClass = 'ui-datepicker-current-day';
+	            return [true, cssClass];
+	        },
+	        onChangeMonthYear: function(year, month, inst) {
+	            selectCurrentWeek();
+	        }
+	    }).datepicker('widget').addClass('ui-weekpicker');
+		
+		console.log($('.ui-datepicker-calendar'));
+		$(".ui-datepicker-calendar tbody tr").mouseover(function() {
+			alert("Tset");
+			$(this).find('td a').addClass('ui-state-hover'); 
+		});
+   	    $(".ui-datepicker-calendar tr").bind("mouseleave", function() { $(this).find('td a').removeClass('ui-state-hover'); });
+	}
+	function monthpicker(){
+		$("#date").empty();
+		$("#date").append(datepick);
+		$("#weekpicker").datetimepicker({
+			format: "yyyy-mm",
+		    viewMode: "months", 
+		    minViewMode: "months"
+		}).on('changeDate', function(e){
+			var date = new Date(e.timeStamp);
+			var year = date.getFullYear();
+			var month = date.getMonth()+1;
+			var retVal =   year + "-" + (month < 10 ? "0" + month : month);
+			alert(retVal);
+	    });
+		
+	}
+	
+	//목록 테이블 이벤트
+	var oTable;
+	function tableInit() {
+		oTable = $("#stats_list").dataTable({
+			"aoColumnDefs": [
+			                 	{
+				                	"sDefaultContent": "",
+				                	"aTargets": [ "_all" ]
+								}
+			               ],
+			"bLengthChange": true,
+   			"bFilter":false,
+   			"sPaginationType": "bootstrap",
+   			"order": [],
+   			"bLengthChange" : false,
+   			"bProcessing": true,
+   			"oLanguage": {
+				"sInfo" : "",
+				"sInfoEmpty" : ""
+			},
+   			"bServerSide": true,
+			"aoColumns": [
+					{"bSortable": false, "sClass": "center"},
+					{ "mDataProp": "amount", "bSortable": false, "sClass": "center" }
+			],
+			"sAjaxSource": "${pageContext.request.contextPath}/admin/stats/statsList" ,
+			"sServerMethod": "GET",
+			"fnServerParams": function ( aoData ) {
+				aoData.push( { "name":"startRegDate", "value":$("#startRegDate").val()} );
+				aoData.push( { "name":"endRegDate", "value":$("#endRegDate").val()} );
+			},
+			"fnDrawCallback": function( oSettings ) {
+			},
+			"fnCreatedRow": function (nRow, aData, iDataIndex) {
+				var totalCnt = oTable.fnSettings().fnRecordsTotal();
+				var startIndex = oTable.fnSettings()._iDisplayStart;
+				$(nRow).find('td').css({'vertical-align' : 'middle'});
+				$(nRow).find('td').eq(0).html(startIndex+iDataIndex + 1);
+				
+				$("#sales").html(aData.total);
+			}
+		});
+	}
+	function excelDown(){
+		var startRegDate = $("input[name='startRegDate']").val();
+		var endRegDate = $("input[name='endRegDate']").val();
+		post_to_url("${pageContext.request.contextPath}/admin/stats/statsExcel",{startRegDate:startRegDate,endRegDate:endRegDate});
+	}
+	
+	function bindTable() {
+		var startRegDate = $("input[name='startRegDate']").val();
+		var endRegDate = $("input[name='endRegDate']").val();
+		$('#startDate').html(startRegDate);
+		$('#endDate').html(' ~ '+ endRegDate);
+		oTable.fnDestroy();
+		tableInit();
+		oTable.fnSettings()._iDisplayStart = 0;
+	}
+</script>
+
+
+</head>
+<body>
+
+
+<form id="frm" name="frm" method="post" >
+	
+	<input type="hidden" id="work_seq" name="work_seq" value="${workInfo.work_seq }">
+	<input type="hidden" id="content_seq" name="content_seq" value="">
+	
+	<!-- Title -->
+	<div class="row">
+		<div class="col-lg-12">
+			<h3 class="page-header page-header-ahope">통계 > 매출 통계</h3>
+			<h5 class="page-header page-header-desc-ahope">매출 통계 내역을 볼 수 있습니다.</h5>
+		</div>
+	</div>
+
+	<!-- Main -->
+	<div class="row">
+		<div class="col-lg-12">
+		
+			<!-- Searchbox -->
+			
+			<div id="filter-panel" class="filter-panel collapse in" style="height: auto;">
+				<div class="panel panel-default">
+					<div class="panel-body">
+						<div class="navbar-form" role="search">
+  							<button type="button" id="dayBtn" class="btn btn-default">일별</button>
+  							<button type="button" id="weekBtn" class="btn btn-default">주간</button>
+  							<button type="button" id="monthBtn" class="btn btn-default">월간</button>
+							<label>등록일 : </label>
+							<div class="form-group search-cm-ahope" id="date">
+								<input type="text" id="weekpicker" required="required"/>
+							</div>
+							<div class="navbar-form search-btn-ahope">
+								<button class="btn btn-ahope" type="button" id="search_btn" >
+									<i class="fa fa-search"></i> 검색
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div>
+				<div class="btn-right">
+						<button type="button" class="btn btn-default" id="excel_btn">Excel 다운로드</button>
+				</div>		
+			</div>
+		
+			
+			<!-- list table -->
+			<table id="stats_list" class="table table-link-ahope">
+				<caption>
+					<strong id="startDate"></strong><strong id="endDate"></strong>&nbsp매출액 : <strong id="sales"></strong>  원
+				</caption>
+	     			<!-- list table header -->
+				<thead id="sms-list-title" style="height:1px;">
+					<tr>
+						<th scope="col" style="width:20%"><strong>순위</strong></th>
+						<th scope="col" style="width:70%"><strong>회원</strong></th>
+					</tr>
+				</thead>
+			</table>
+			
+		</div>
+	</div>
+	
+</form>
+</body>
+</html>

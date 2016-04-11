@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="Content">
+    
+    <select id="getWork" parameterType="hashmap" resultType="hashmap">
+		SELECT  tw.work_seq AS work_seq
+			,tw.work_name AS work_name
+			,tw.work_desc AS work_desc
+			,GROUP_CONCAT(ta.author_name) AS author_name
+			,tg.genre_seq
+			,tg.genre_name AS genre_name
+			,td.days AS day
+			,CASE tw.fin_yn 
+				WHEN 'Y' THEN '완료'
+				WHEN 'N' THEN '연재중'
+			 END AS fin_yn
+			,IFNULL(DATE_FORMAT(tw.reg_date, '%Y-%m-%d'), ' ') AS reg_date
+			,CASE tw.service_state
+				WHEN 'Y' THEN '서비스중'
+				WHEN 'N' THEN '서비스중지'
+			 END AS service_state
+			,tw.thumbnail_img_name AS thumbnail_img_name
+		FROM tb_work tw INNER JOIN tb_work_author twa
+				ON tw.work_seq = twa.work_seq
+				LEFT OUTER JOIN tb_author ta
+				ON twa.author_seq = ta.author_seq
+				INNER JOIN (SELECT twg.work_seq AS work_seq, GROUP_CONCAT(tg.genre_name) AS genre_name
+									,GROUP_CONCAT(tg.genre_seq) AS genre_seq
+							   FROM tb_genre tg INNER JOIN tb_work_genre twg
+									    ON tg.genre_seq = twg.genre_seq
+							   GROUP BY twg.work_seq) tg
+						ON tg.work_seq = tw.work_seq
+						LEFT OUTER JOIN (SELECT twd.work_seq AS work_seq,
+						GROUP_CONCAT(CASE twd.day
+								WHEN '1' THEN '월요일'
+								WHEN '2' THEN '화요일'
+								WHEN '3' THEN '수요일'
+								WHEN '4' THEN '목요일'
+								WHEN '5' THEN '금요일'
+								WHEN '6' THEN '토요일'
+								WHEN '7' THEN '일요일'
+								END) AS days
+						FROM tb_work tw INNER JOIN tb_work_day twd
+							   ON tw.work_seq = twd.work_seq
+					GROUP BY twd.work_seq) td
+				ON td.work_seq = tw.work_seq
+		WHERE tw.work_seq = #{work_seq }
+		GROUP BY tw.work_seq        
+    </select>
+    
+    <select id="contentTotalCnt" parameterType="hashmap" resultType="Integer">
+        SELECT count(*)
+		FROM tb_content
+		WHERE work_seq = #{work_seq}
+		AND   del_yn = 'N'
+    </select>
+    <select id="contentList" parameterType="hashmap" resultType="hashmap">
+        SELECT content_seq
+        	,title
+			,work_seq
+			,thumbnail_img_name
+			,paid_yn
+			,coin
+			,IFNULL(DATE_FORMAT(reg_date, '%Y-%m-%d'), ' ') AS reg_date
+			,service_state
+		FROM tb_content
+		WHERE work_seq = #{work_seq}
+		AND   del_yn = 'N'
+		ORDER BY content_order DESC
+		LIMIT #{iDisplayStart}, #{iDisplayLength}
+    </select>
+    <select id="authorList" parameterType="hashmap" resultType="hashmap">
+        SELECT ta.author_id AS author_id
+			,ta.author_name AS author_name
+			, tw.work_name AS work_name
+			, twa.work_seq AS work_seq
+		FROM tb_author ta INNER JOIN tb_work_author twa
+				  ON ta.author_seq = twa.author_seq
+				  INNER JOIN tb_work tw
+				  ON twa.work_seq = tw.work_seq
+		WHERE twa.work_seq = #{work_seq};
+    </select>
+    
+    <insert id="insertContent" parameterType="hashmap">
+        INSERT INTO tb_content
+			(work_seq
+			,content_order
+			,title
+			,service_state
+			,thumbnail_img_name
+			,thumbnail_img_path
+			,paid_yn
+			,content_enc_key
+			,coin
+			,reg_manager_seq
+			,reg_date)
+		VALUES (#{work_seq}
+				,#{content_order}
+				,#{title}
+				,#{service_state}
+				,#{thumbnail_img_name}
+				,#{thumbnail_img_path}
+				,#{paid_yn}
+				,#{content_enc_key}
+				,#{coin}
+				,#{reg_manager_seq}
+				,CURRENT_TIMESTAMP)
+    </insert>
+    
+    <select id="getThumbnail" parameterType="hashmap" resultType="hashmap">
+		SELECT thumbnail_img_name,thumbnail_img_path
+		FROM tb_work
+		WHERE work_seq = #{work_seq};   
+    </select>
+    
+    <select id="getContentSeq" resultType="hashmap">
+        SELECT AUTO_INCREMENT AS content_seq
+		FROM information_schema.TABLES
+		WHERE TABLE_SCHEMA = "toondra"
+		AND table_name = "tb_content"
+    </select>
+    
+    <select id="insertContentFile" parameterType="hashmap">
+        INSERT INTO tb_content_file
+				(content_seq
+				,content_file_name
+				,content_file_path
+				,reg_date)
+			VALUES (
+				#{content_seq}
+				,#{content_file_name}
+				,#{content_file_path}
+				,CURRENT_TIMESTAMP
+				)
+        
+    </select>
+    
+    <update id="updateContentState" parameterType="hashmap">
+		UPDATE	tb_content
+		SET		service_state = #{service_state}
+				,upt_manager_seq = #{upt_manager_seq}
+    			,upt_date = NOW()
+		WHERE	content_seq IN
+		<foreach collection="list" item="content" index="index" separator="," open="(" close=")">
+           #{content}
+        </foreach>
+	</update>
+    
+    <update id="deleteContent" parameterType="hashmap">
+		UPDATE	tb_content
+		SET		del_yn = 'Y'
+				,upt_manager_seq = #{upt_manager_seq}
+    			,upt_date = NOW()
+		WHERE	content_seq IN
+		<foreach collection="list" item="content" index="index" separator="," open="(" close=")">
+           #{content}
+        </foreach>
+	</update>  
+    
+    <select id="getContent" parameterType="hashmap" resultType="hashmap">
+        SELECT title
+			,content_order
+			,service_state
+			,thumbnail_img_name
+			,paid_yn
+			,coin
+			,work_seq
+			,content_seq
+		FROM tb_content
+		WHERE content_seq = #{content_seq};
+    </select>
+    
+    <select id="getContentFile" parameterType="hashmap" resultType="hashmap">
+        SELECT content_file_name
+        		,content_file_seq
+		FROM tb_content_file
+		WHERE content_seq = #{content_seq }
+    </select>
+    
+     <update id="updateContent" parameterType="hashmap">
+        UPDATE tb_content
+		SET content_order = #{content_order}
+		    ,title = #{title}
+		    ,service_state = #{service_state}
+		    ,paid_yn = #{paid_yn}
+		    ,coin = #{coin}
+		<if test="thumbnail_img_name != null and thumbnail_img_name != ''" >
+        	,thumbnail_img_name = #{thumbnail_img_name }
+        	,thumbnail_img_path = #{thumbnail_img_path }
+       	</if>
+		    ,upt_manager_seq = ${upt_manager_seq}
+		WHERE content_seq = ${content_seq}
+    </update>
+    <delete id="deleteContentFile" parameterType="hashmap">
+        DELETE FROM tb_content_file
+        WHERE content_file_seq = #{content_file_seq}
+    </delete>
+	<select id="getContentFilePath" parameterType="hashmap" resultType="hashmap">
+		SELECT content_file_path
+		FROM tb_content_file
+		WHERE content_file_seq = #{content_file_seq};
+	</select>    
+	
+	<select id="getContentKey" parameterType="hashmap" resultType="hashmap">
+	     SELECT content_enc_key
+		 FROM tb_content
+		 WHERE content_seq = #{content_seq };
+	</select>
+	
+	<insert id="insertPush" parameterType="hashmap">
+	    INSERT INTO tb_push_send (
+			type
+			,send_datetime
+			,send_state
+			,title
+			,content
+			,work_seq
+			,reg_manager_seq
+			,reg_date
+		) VALUES (
+			'01'
+			,DATE_ADD(NOW(), INTERVAL 5 MINUTE)
+			,'00'
+			,''
+			,''
+			,#{work_seq}
+			,${reg_manager_seq}
+			,CURRENT_TIMESTAMP
+		)
+	    
+	</insert>
+	
+	<select id="getWorkPush" parameterType="hashmap" resultType="hashmap">
+	    SELECT DISTINCT work_seq
+		FROM tb_member_work_push
+		WHERE push_yn = 'Y'
+		AND work_seq = #{work_seq};
+	</select>
+</mapper>

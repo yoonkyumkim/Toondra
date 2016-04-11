@@ -1,0 +1,88 @@
+package kr.co.toondra.web.community.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.base.controller.BaseController;
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.community.service.PushService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping("/admin/community/push")
+@Controller
+public class PushController extends BaseController {
+
+	@Autowired
+	private PushService service;
+	
+	@RequestMapping("/pushListView")
+	public String pushListView(Model model) {
+		return "toondra/community/push/pushList";
+	}
+	
+	@RequestMapping("/pushList")
+	public String pushList(HttpServletRequest req, Model model) {
+		
+		PMap pMap = new PMap(req);
+		
+		pMap.put("iDisplayStart", pMap.getInt("iDisplayStart"));
+		pMap.put("iDisplayLength", pMap.getInt("iDisplayLength"));
+		
+		model.addAllAttributes(service.getPushList(pMap));
+		
+		return JSON_VIEW;
+	}
+
+	@RequestMapping("/pushDetail")
+	public String pushDetail(HttpServletRequest req, Model model) {
+		
+		model.addAllAttributes(service.getPush(new PMap(req)));
+		
+		return "toondra/community/push/pushDetail";
+	}
+	
+	@RequestMapping("/insertPushView")
+	public String insertPushView(HttpServletRequest req, Model model) throws Exception {
+		
+		return "toondra/community/push/push";
+	}
+	
+	@RequestMapping("/insertPush")
+	public String insertPush(HttpServletRequest req, Model model) throws Exception {
+
+		service.insertPush(new PMap(req));
+		model.addAttribute("result", true);
+		
+		return JSON_VIEW;
+	}
+	
+	@RequestMapping("/updatePush")
+	public String updatePush(HttpServletRequest req, Model model) throws Exception {
+		
+		service.updatePush(new PMap(req));
+		model.addAttribute("result", true);
+		
+		return JSON_VIEW;
+	}
+	
+	@RequestMapping("/deletePush")
+	public String deletePush(HttpServletRequest req, Model model) throws Exception {
+		
+		service.deletePush(new PMap(req));
+		model.addAttribute("result", true);
+		
+		return JSON_VIEW;
+	}
+	
+	@RequestMapping("/updatePushPost")
+	public String updatePushPost(HttpServletRequest req, Model model) throws Exception {
+		
+		service.updatePushPost(new PMap(req));
+		model.addAttribute("result", true);
+		
+		return JSON_VIEW;
+	}
+}

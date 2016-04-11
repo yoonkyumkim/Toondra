@@ -1,0 +1,126 @@
+package kr.co.toondra.api.work.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import kr.co.toondra.api.bean.Result;
+import kr.co.toondra.api.work.dao.WorkDao;
+import kr.co.toondra.common.exception.LogicException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+@Service("apiWorkService")
+public class WorkService {
+
+	@Autowired
+	private WorkDao dao;
+	
+	@Value("${url.local}")
+	private String API_URL;
+	
+	public Result getWorkList(HashMap<String, Object> param) throws Exception{
+		
+		Result result = new Result();
+		
+		List<HashMap<String, Object>> workList = new ArrayList<HashMap<String, Object>>();
+		
+		int workTotalCnt = 0;
+		
+		workTotalCnt = dao.getWorkTotalCnt(param);
+		
+		workList = dao.getWorkList(param);
+		
+		if(workTotalCnt != workList.size()) {
+			throw new LogicException("total cnt, workList cnt disagreement","408");
+		}
+		
+		if(workList.size() > 0) {
+			
+			for(int i = 0; i < workList.size(); i++) {
+				
+				HashMap<String, Object> workMap = new HashMap<String, Object>();
+				
+				workMap = workList.get(i);
+				
+				String imgName =  (String)workMap.get("thumbnail_img_url");
+				
+				String thumbnailUrl = "";
+				
+				if(imgName != null && !imgName.equals("")) {
+				
+					thumbnailUrl = API_URL + "/api/image/thumbnail/" + imgName;
+					
+					workList.get(i).put("thumbnail_img_url", thumbnailUrl);
+				}
+			}
+		}
+		
+		result.putObject("total_cnt", workTotalCnt);
+		result.putObject("work_list", workList);
+		
+		
+		return result;
+	}
+	
+	
+	public Result getContentList(HashMap<String, Object> param) throws Exception{
+		
+		Result result = new Result();
+		
+		HashMap<String, Object> workInfo = new HashMap<String, Object>();
+
+		List<HashMap<String, Object>> contentList = new ArrayList<HashMap<String, Object>>();
+		
+		workInfo =  dao.getWorkInfo(param);
+
+		int contentTotalCnt = 0;
+		
+		contentTotalCnt = dao.getContentTotalCnt(param);
+		
+		contentList = dao.getContentList(param);
+		
+		
+		if(workInfo == null || workInfo.isEmpty() || ((String)workInfo.get("work_name")).equals("")) {
+			throw new LogicException("[Query] not found data { work info }","402");
+		}
+		
+		if(contentTotalCnt != contentList.size()) {
+			throw new LogicException("total cnt, contentList cnt disagreement","408");
+		}
+		
+		//작품
+		workInfo.put("work_thumnail_img_url", API_URL + "/api/image/thumbnail/" + param.get("work_seq"));
+		
+		//컨텐츠 
+		if(contentList.size() > 0) {
+			for(int i = 0; i < contentList.size(); i++) {
+				
+				HashMap<String, Object> contentMap = new HashMap<String, Object>();
+				
+				contentMap = contentList.get(i);
+				
+				String imgName =  (String)contentMap.get("thumbnail_img_url");
+				
+				String thumbnailUrl = "";
+				
+				if(imgName != null && !imgName.equals("")) {
+				
+					thumbnailUrl = API_URL + "/api/image/thumbnail/" + imgName;
+					
+					contentList.get(i).put("thumbnail_img_url", thumbnailUrl);
+				}
+			}
+		}
+		
+		result.putObject("total_cnt", contentTotalCnt);
+		result.setData(workInfo);
+		result.putObject("work_list", contentList);
+		
+		return result;
+	}
+	
+	
+}

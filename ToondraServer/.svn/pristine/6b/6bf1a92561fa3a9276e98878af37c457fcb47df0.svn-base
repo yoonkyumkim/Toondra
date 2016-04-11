@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="Author">
+    
+    <sql id="authorWhere" >
+        <if test='gubun == "author_id"'>
+            <if test='searchParam != null and searchParam != ""' >
+            	AND (author_id LIKE CONCAT('%',#{searchParam},'%'))
+        	</if>
+        </if>
+        <if test='gubun == "author_name"'>
+            <if test='searchParam != null and searchParam != ""' >
+            	AND (author_name LIKE CONCAT('%',#{searchParam},'%'))
+        	</if>
+        </if>
+        <if test='gubun == "phone_num"'>
+            <if test='searchParam != null and searchParam != ""' >
+           		AND (phone_num LIKE CONCAT('%',#{searchParam},'%'))
+        	</if>
+        </if>
+        <if test='gubun == "email"'>
+            <if test='searchParam != null and searchParam != ""' >
+            	AND (email LIKE CONCAT('%',#{searchParam},'%'))
+        	</if>
+        </if>
+    </sql>
+    
+    <select id="getAuthor" parameterType="hashmap" resultType="hashmap"> 
+     	SELECT author_seq
+     		,author_id
+			,author_name
+			,email
+			,bank_code_seq
+			,depositor
+			,account_num
+			,major_work
+			,remark
+			,IFNULL(DATE_FORMAT(reg_date, '%Y-%m-%d'), ' ') AS reg_date
+		FROM tb_author
+		WHERE author_seq = #{author_seq};
+    </select>
+    <select id="authorTotalCnt" parameterType="hashmap" resultType="Integer">
+        SELECT COUNT(*)
+		FROM (SELECT tp.author_seq
+			FROM tb_author ta INNER JOIN tb_author_phone_num tp
+					  ON ta.author_seq = tp.author_seq
+			WHERE 1 = 1
+		<include refid="authorWhere" />	
+			GROUP BY tp.author_seq) A; 
+    </select>
+    
+    <select id="authorList" parameterType="hashmap" resultType="hashmap">
+        SELECT ta.author_seq AS author_seq
+        	,ta.author_id AS author_id
+			,ta.author_name AS author_name
+			,tp.phone_num AS phone_num
+			,ta.email AS email
+			,IFNULL(DATE_FORMAT(ta.reg_date, '%Y-%m-%d'), ' ') AS reg_date
+		FROM tb_author ta INNER JOIN tb_author_phone_num tp
+				  ON ta.author_seq = tp.author_seq
+		WHERE 1 = 1
+	<include refid="authorWhere" />			  
+		GROUP BY tp.author_seq
+		ORDER BY ta.reg_date DESC
+		LIMIT #{iDisplayStart}, #{iDisplayLength}
+    </select>
+    <insert id="create" parameterType="hashmap">
+        INSERT INTO tb_author
+        	(author_id
+			,author_name
+			,email
+			,bank_code_seq
+			,depositor
+			,account_num
+			,major_work
+			,remark
+			,reg_manager_seq
+			,reg_date)
+		VALUES(#{author_id}
+			,#{author_name}
+			,#{email}
+			,#{bank_code_seq}
+			,#{depositor}
+			,#{account_num}
+			,#{major_work}
+			,#{remark}
+			,#{reg_manager_seq}
+			,CURRENT_TIMESTAMP
+			)
+    </insert>
+    <select id="getSeq" resultType="hashmap">
+        SELECT LAST_INSERT_ID() AS author_seq
+		FROM tb_author
+		LIMIT 1
+    </select>
+    <insert id="createAddr" parameterType="hashmap">
+        INSERT INTO tb_author_addr
+			(author_seq
+			,zip_code
+			,addr
+			,detail_addr)
+		VALUES(#{author_seq}
+			,#{zip_code}
+			,#{addr}
+			,#{detail_addr})
+    </insert>
+    <insert id="createPhone" parameterType="hashmap">
+        INSERT INTO tb_author_phone_num
+        	(author_seq
+        	,phone_num)
+        VALUES(#{author_seq}
+        	,#{phone_num})
+        
+    </insert>
+    
+    <select id="idChk" parameterType="hashmap" resultType="hashmap">
+        SELECT author_id
+        from tb_author
+        WHERE author_id = #{author_id}
+    </select>
+    
+    <select id="getAddrList" parameterType="hashmap" resultType="hashmap">
+        SELECT addr_seq
+			,zip_code
+			,addr
+			,detail_addr
+		FROM tb_author_addr
+		WHERE author_seq = #{author_seq};
+    </select>
+    <select id="getPhoneList" parameterType="hashmap" resultType="hashmap">
+        SELECT phone_num_seq
+			,phone_num
+		FROM tb_author_phone_num
+		WHERE author_seq = #{author_seq};
+    </select>
+    
+    <delete id="delAddr" parameterType="hashmap">
+        DELETE FROM tb_author_addr
+        WHERE addr_seq = #{addr_seq}
+    </delete>
+    
+    <update id="updateAddr" parameterType="hashmap">
+		UPDATE tb_author_addr
+		SET zip_code = #{zip_code}
+			,addr = #{addr}
+			,detail_addr = #{detail_addr }
+		WHERE addr_seq = #{addr_seq }
+    </update>
+    
+    <delete id="delPhone" parameterType="hashmap">
+        DELETE FROM tb_author_phone_num
+        WHERE phone_num_seq = #{phone_num_seq}
+    </delete>
+    <update id="updatePhone" parameterType="hashmap">
+        UPDATE tb_author_phone_num
+        SET phone_num = #{phone_num}
+        WHERE phone_num_seq = #{phone_num_seq}
+    </update>
+    
+    <update id="updateAuthor" parameterType="hashmap">
+		UPDATE tb_author    
+		SET email = #{email}
+			,bank_code_seq = #{bank_code_seq}
+			,depositor = #{depositor}
+			,account_num = #{account_num}
+			,major_work = #{major_work}
+			,upt_manager_seq = #{upt_manager_seq}
+			,upt_date =  CURRENT_DATE 
+		WHERE author_seq = #{author_seq}
+    </update>
+    
+    <delete id="deleteAuthor" parameterType="hashmap">
+        DELETE a, aa, ap
+		FROM tb_author a INNER JOIN tb_author_addr aa
+				 ON a.author_seq = aa.author_seq
+				 INNER JOIN tb_author_phone_num ap
+				 ON a.author_seq = ap.author_seq
+		WHERE a.author_seq = #{author_seq};
+    </delete>
+    <select id="getWork" parameterType="hashmap" resultType="Integer">
+        SELECT COUNT(*)
+		FROM tb_work_author
+		WHERE author_seq = #{author_seq}
+    </select>
+</mapper>

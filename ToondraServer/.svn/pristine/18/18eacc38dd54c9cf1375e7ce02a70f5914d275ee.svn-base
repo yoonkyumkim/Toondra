@@ -1,0 +1,23 @@
+package kr.co.toondra.web.author.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping(value="/admin/author")
+@Controller
+public class AuthorController {
+	
+	protected Logger logger = Logger.getLogger(this.getClass());
+	
+	@RequestMapping(value="/listView")
+	public String AuthorListView(HttpServletRequest request){
+		logger.debug("[ST][/AuthorListView]");
+		logger.debug("[ED][/AuthorListView]");
+		
+		return "toondra/author/authorListView";
+	}
+
+}

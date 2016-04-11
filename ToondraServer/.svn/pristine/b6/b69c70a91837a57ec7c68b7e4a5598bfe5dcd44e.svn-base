@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="Notice">
+
+  	<sql id="noticeWhere">
+    	WHERE	notice.reg_manager_seq = manager.manager_seq
+    	<choose>
+    		<when test='startRegDate != "" and endRegDate == ""'>
+		  		<![CDATA[
+	    			AND	notice.reg_date >= STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startRegDate == "" and endRegDate != ""'>
+    			<![CDATA[
+	    			AND	notice.reg_date <= STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startRegDate != "" and endRegDate != ""'>
+				AND notice.reg_date 
+					BEETWEEN STR_TO_DATE(CONCAT(#{startRegDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+					AND STR_TO_DATE(CONCAT(#{endRegDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+    		</when>
+    	</choose>
+    	<choose>
+    		<when test='startPostDate != "" and endPostDate == ""'>
+		  		<![CDATA[
+	    			AND	notice.post_date >= STR_TO_DATE(CONCAT(#{startPostDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startPostDate == "" and endPostDate != ""'>
+    			<![CDATA[
+	    			AND	notice.post_date <= STR_TO_DATE(CONCAT(#{endPostDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+	    		]]>
+    		</when>
+    		<when test='startPostDate != "" and endPostDate != ""'>
+				AND notice.post_date
+					BEETWEEN STR_TO_DATE(CONCAT(#{startPostDate},' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+					AND STR_TO_DATE(CONCAT(#{endPostDate},' 23:59:59'), '%Y-%m-%d %H:%i:%s')
+    		</when>
+    	</choose>
+    	
+    	<if test='title != null and title != ""'>
+    	AND		notice.title LIKE CONCAT('%',#{title},'%')
+    	</if>
+    	<if test='postYn != null and postYn != ""'>
+    	AND		notice.post_yn = #{postYn}
+    	</if>
+    </sql>
+    
+    <select id="getNoticeListCount" parameterType="hashmap" resultType="integer">
+        SELECT	COUNT(notice.notice_seq)
+        FROM 	tb_notice notice
+        		,tb_manager manager
+        <include refid="noticeWhere"/>
+    </select>
+    
+    <select id="getNoticeList" parameterType="hashmap" resultType="hashmap">
+    	SELECT	notice.notice_seq	AS "noticeSeq"
+    			,notice.title		AS "title"
+    			,notice.content		AS "content"
+    			,notice.post_yn		AS "postYn"
+    			,IF(notice.post_yn = 'Y', '게시중', '게시중지') AS "postYnStr"
+    			,notice.reg_manager_seq AS "managerSeq"
+    			,manager.id			AS "id"
+    			,DATE_FORMAT(notice.reg_date, '%Y-%m-%d %H:%i:%s')	AS "regDate"
+    			,DATE_FORMAT(notice.post_date, '%Y-%m-%d %H:%i:%s')	AS "postDate"
+    	FROM	tb_notice notice
+        		,tb_manager manager
+        <include refid="noticeWhere"/>
+    	ORDER BY notice.notice_seq desc
+		<if test="iDisplayStart != null and iDisplayLength != null">
+		LIMIT 	#{iDisplayStart}, #{iDisplayLength}
+		</if>
+    </select>
+    
+    <select id="getNotice" parameterType="hashmap" resultType="hashmap">
+    	SELECT	notice.notice_seq	AS "noticeSeq"
+    			,notice.title		AS "title"
+    			,notice.content		AS "content"
+    			,notice.post_yn		AS "postYn"
+    			,IF(notice.post_yn = 'Y', '게시중', '게시중지') AS "postYnStr"
+    			,notice.reg_manager_seq AS "managerSeq"
+    			,manager.id			AS "id"
+    			,manager.name		AS "name"
+    			,DATE_FORMAT(notice.reg_date, '%Y-%m-%d %H:%i:%s')	AS "regDate"
+    			,DATE_FORMAT(notice.post_date, '%Y-%m-%d %H:%i:%s')	AS "postDate"
+    	FROM	tb_notice notice
+        		,tb_manager manager
+        WHERE	notice.reg_manager_seq = manager.manager_seq
+        AND		notice.notice_seq = #{noticeSeq}
+    </select>
+    
+    <insert id="insertNotice" parameterType="hashmap">
+    	INSERT INTO	tb_notice
+    				(
+    				title
+    				,content
+    				,reg_manager_seq
+    				,reg_date
+    				,post_yn
+    	<if test='postYn == "Y"'>
+    				,post_date
+    	</if>
+    				)
+    	VALUES		(
+    				#{title}
+    				,#{content}
+    				,#{managerSeq}
+    				,NOW()
+    				,#{postYn}
+    	<if test='postYn == "Y"'>
+    				,NOW()
+    	</if>
+    				)
+    </insert>
+    
+    <update id="updateNotice" parameterType="hashmap">
+    	UPDATE	tb_notice
+    	SET		title 		= #{title}
+    			,content 	= #{content}
+    			,post_yn 	= #{postYn}
+		<choose>
+			<when test='postYn == "Y"'>
+				,post_date 	= (IF(post_date IS NULL, NOW(), post_Date))
+			</when>
+			<otherwise>
+				,post_date 	= null
+			</otherwise>
+		</choose>
+    			,upt_manager_seq = #{managerSeq}
+    	WHERE	notice_seq = #{noticeSeq}
+    </update>
+    
+	<delete id="deleteNotice" parameterType="list">
+		DELETE
+		FROM	tb_notice
+		WHERE	notice_seq IN
+		<foreach collection="list" item="notice" index="index" separator="," open="(" close=")">
+           #{notice}
+        </foreach>
+	</delete>    
+
+	<update id="updateNoticePost" parameterType="hashmap">
+		UPDATE	tb_notice
+		SET		post_yn = #{postYn}
+		<choose>
+			<when test='postYn == "Y"'>
+				,post_date = (IF(post_date IS NULL, NOW(), post_Date))
+			</when>
+			<otherwise>
+				,post_date = null
+			</otherwise>
+		</choose>
+		WHERE	notice_seq IN
+		<foreach collection="list" item="notice" index="index" separator="," open="(" close=")">
+           #{notice}
+        </foreach>
+	</update>
+
+</mapper>

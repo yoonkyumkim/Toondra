@@ -1,0 +1,54 @@
+package kr.co.toondra.web.service.controller;
+
+import java.util.HashMap;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.common.exception.LogicException;
+import kr.co.toondra.web.service.service.GenreService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping("/admin/service")
+@Controller
+public class GenreController {
+	
+	@Autowired
+	private GenreService service;
+	
+	@RequestMapping("/genre")
+	public String genre(Model model) {
+		
+		List<HashMap<String, Object>> genreList = service.getGenreList();
+		model.addAttribute("genreList", genreList);
+		
+		return "toondra/service/genre/genreList";
+	}
+
+	@RequestMapping("/genre/ajax")
+	public String genreUpdate(HttpServletRequest req, Model model) {
+
+		boolean result = true;
+		String msg = "";
+		try {
+			service.genreUpdate(new PMap(req));
+			
+		} catch(LogicException le) {
+			msg = le.getMessage();
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = false;
+			msg = "등록에 실패하였습니다.";
+		}
+
+		model.addAttribute("result", result);
+		model.addAttribute("msg", msg);
+		
+		return "jacksonView";
+	}
+}

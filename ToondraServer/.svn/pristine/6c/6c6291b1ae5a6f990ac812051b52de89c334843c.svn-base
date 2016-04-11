@@ -1,0 +1,272 @@
+package kr.co.toondra.web.work.service;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+
+import javax.servlet.http.HttpSession;
+
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.common.util.SessionUtil;
+import kr.co.toondra.web.work.dao.WorkDao;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+
+@Service
+public class WorkService {
+	
+	@Value("${file.root_path}")
+	String ROOT_PATH;
+	
+	@Value("${url.local}")
+	String URL;
+	
+	@Autowired
+	WorkDao dao = new WorkDao();
+
+	public PMap searchAuthor(PMap pMap) {
+		
+		List<HashMap<String,Object>> authorList = new ArrayList<HashMap<String,Object>>();
+		authorList = dao.searchAuthor(pMap);
+		pMap.put("data", authorList);
+		return pMap;
+	}
+
+	public PMap genreList(PMap pMap) {
+		List<HashMap<String,Object>> genreList = new ArrayList<HashMap<String,Object>>();
+		genreList = dao.genreList();
+		pMap.put("genreList", genreList);
+		
+		return pMap;
+	}
+
+	public PMap insertWork(PMap pMap) {
+		String day[] = pMap.getRequest().getParameterValues("day");
+		String addAuthorList[] = pMap.getRequest().getParameterValues("author_seq");
+		String addGenreList[] = pMap.getRequest().getParameterValues("genre_seq");
+		
+		SessionUtil util = new SessionUtil(pMap.getRequest());
+		pMap.put("reg_manager_seq",util.getSessionValue("s_manager_seq"));
+		
+		MultipartHttpServletRequest mRequest = pMap.getMultipartRequest();
+		MultipartFile mFile = mRequest.getFile("thumbnail_img_name");
+		String fileName = Calendar.getInstance().getTimeInMillis() + "_" + mFile.getOriginalFilename();
+		if(mFile.getSize() > 0) {
+			String workSeq = dao.getWorkSeq().get("work_seq").toString();
+			pMap.put("work_seq", workSeq);
+			String filePath = ROOT_PATH + "/" + workSeq + "/" + fileName;
+			File workDir = new File(ROOT_PATH + "/" +workSeq);
+			workDir.mkdir();
+			pMap.put("thumbnail_img_name", fileName);
+			pMap.put("thumbnail_img_path", filePath);
+			File file = new File(filePath);
+			dao.insertWork(pMap);
+			try {
+				mFile.transferTo(file);
+			} catch (IllegalStateException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			HashMap<String, Object> map = new HashMap<String, Object>();
+			map.put("work_seq", workSeq);
+			for(int i = 0; i<addAuthorList.length; i++){
+				map.put("author_seq", addAuthorList[i]);
+				dao.insertWorkAuthor(map);
+			}
+			if(day != null) {
+				for(int i = 0; i<day.length; i++) {
+					map.put("day", day[i]);
+					dao.insertDay(map);
+				}
+			}
+			for(int i = 0; i<addGenreList.length; i++) {
+				map.put("genre_seq", addGenreList[i]);
+				dao.insertWorkGenre(map);
+			}
+		}
+		pMap.put("result", "success");
+		return pMap;
+	}
+
+	
+	public HashMap<String, Object> workList(PMap pMap) {
+
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		
+		int totalcnt = dao.getWorkTotalCnt(pMap);
+		List<HashMap<String, Object>> workList = dao.getWorkList(pMap);
+		
+		result.put("iTotalRecords", totalcnt);
+		result.put("iTotalDisplayRecords", totalcnt);		
+		result.put("aaData", workList);
+		
+		
+		return result;
+	}
+
+	public int updateWorkState(PMap pMap) {
+		
+		HttpSession session = pMap.getRequest().getSession();
+		pMap.put("upt_manager_seq", session.getAttribute("s_manager_seq"));
+		
+		List<String> workSeqList = Arrays.asList(pMap.getString("workSeqStr").split("\\|"));
+		pMap.put("list", workSeqList);
+		return dao.updateWorkState(pMap);
+	}
+
+	public int deleteWork(PMap pMap) {
+		
+		HttpSession session = pMap.getRequest().getSession();
+		pMap.put("upt_manager_seq", session.getAttribute("s_manager_seq"));
+
+		List<String> workSeqList = Arrays.asList(pMap.getString("workSeqStr").split("\\|"));
+		pMap.put("list", workSeqList);
+		
+		return dao.deleteWork(pMap);
+	}
+	
+	public PMap getWork(PMap pMap) {
+		HashMap<String, Object> workInfo = dao.getWork(pMap);
+		List<HashMap<String, Object>> authorInfo = dao.getAuthor(pMap);
+		List<HashMap<String, Object>> dayInfo = dao.getDay(pMap);
+		List<HashMap<String, Object>> genreInfo = dao.getGenre(pMap);
+		List<HashMap<String,Object>> genreList = dao.genreList();
+		
+		String thumbnail = (String) workInfo.get("thumbnail_img_name");
+		
+		thumbnail = URL + "/api/image/thumbnail/"+ pMap.getString("work_seq");
+		
+		workInfo.put("thumbnail_img_url", thumbnail);
+		
+		HashMap<String, Object> dayMap = new HashMap<String, Object>();
+		for(int i = 1; i <= 7; i++ ){
+			for(int y = 0; y<dayInfo.size(); y++ ){
+				int num = Integer.parseInt(dayInfo.get(y).get("day").toString());
+				if(i == num){
+					dayMap.put("day"+i, i);
+				}
+			}
+		}
+		
+		pMap.put("genreList", genreList);
+		pMap.put("dayMap", dayMap);
+		pMap.put("workInfo", workInfo);
+		pMap.put("authorInfo", authorInfo);
+		pMap.put("genreInfo", genreInfo);
+		
+		
+		return pMap;
+	}
+	
+	public PMap updateWork(PMap pMap) {
+		String day[] = pMap.getRequest().getParameterValues("day");
+		String addAuthorList[] = pMap.getRequest().getParameterValues("author_seq");
+		String addGenreList[] = pMap.getRequest().getParameterValues("genre_seq");
+		String delAuthorList[] = pMap.getRequest().getParameterValues("del_author");
+		String delGenreList[] = pMap.getRequest().getParameterValues("del_genre");
+		String beforeAuthorList[] = pMap.getRequest().getParameterValues("before_author_seq");
+		String updateAuthorList[] = pMap.getRequest().getParameterValues("update_author_seq");
+		String beforeGenreList[] = pMap.getRequest().getParameterValues("before_genre_seq");
+		String updateGenreList[] = pMap.getRequest().getParameterValues("update_genre_seq");
+		HashMap<String, Object> map = new HashMap<String, Object>();
+		//주소
+		map.put("work_seq", pMap.get("work_seq"));
+		if(delAuthorList != null){
+			for(int i = 0; i < delAuthorList.length; i++) {
+				map.put("author_seq", delAuthorList[i]);
+				dao.delWorkAuthor(map);
+			}
+		}
+		map.clear();
+		if(updateAuthorList != null){
+			for(int i = 0; i < updateAuthorList.length; i++) {
+				map.put("work_seq", pMap.get("work_seq"));
+				map.put("before_author_seq", beforeAuthorList[i]);
+				map.put("author_seq", updateAuthorList[i]);
+				dao.updateWorkAuthor(map);
+			}
+		}
+		map.clear();
+		if(addAuthorList != null){
+			for(int i = 0; i<addAuthorList.length; i++){
+				map.put("work_seq", pMap.get("work_seq"));
+				map.put("author_seq", addAuthorList[i]);
+				dao.insertWorkAuthor(map);
+			}
+		}
+		//장르 
+		if(delGenreList != null){
+			for(int i = 0; i < delGenreList.length; i++) {
+				map.put("work_seq", pMap.get("work_seq"));
+				map.put("genre_seq", delGenreList[i]);
+				dao.delWorkGenre(map);
+			}
+		}
+		map.clear();
+		if(updateGenreList != null){
+			for(int i = 0; i < updateGenreList.length; i++) {
+				map.put("work_seq", pMap.get("work_seq"));
+				map.put("before_genre_seq", beforeGenreList[i]);
+				map.put("genre_seq", updateGenreList[i]);
+				dao.updateWorkGenre(map);
+			}
+		}
+		map.clear();
+		if(addGenreList != null) {
+			for(int i = 0; i<addGenreList.length; i++) {
+				map.put("work_seq", pMap.get("work_seq"));
+				map.put("genre_seq", addGenreList[i]);
+				dao.insertWorkGenre(map);
+			}
+		}
+		dao.deleteDay(pMap);
+		if(day != null) {
+			for(int i = 0; i<day.length; i++) {
+				map.put("work_seq", pMap.get("work_seq"));
+				map.put("day", day[i]);
+				dao.insertDay(map);
+			}
+		}
+		
+		MultipartHttpServletRequest mRequest = pMap.getMultipartRequest();
+		MultipartFile mFile = mRequest.getFile("thumbnail_img_name");
+		String fileName = Calendar.getInstance().getTimeInMillis() + "_" + mFile.getOriginalFilename();
+		String filePath = ROOT_PATH + "/" + pMap.get("work_seq") + "/" + fileName;
+		String beforeThumbnail = pMap.getString("before_thumbnail_img_name");
+		String beforethumbnailFilePath = ROOT_PATH + "/" +pMap.get("work_seq")+ "/" + beforeThumbnail;
+		if(mFile.getSize() > 0) {
+			File file = new File(filePath);
+			File dir = new File(ROOT_PATH + "/" +pMap.get("work_seq"));
+			if(!dir.exists()) {
+				dir.mkdir();
+			}
+			File before_file = new File(beforethumbnailFilePath);
+			before_file.delete();
+			try {
+				mFile.transferTo(file);
+			} catch (IllegalStateException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			pMap.put("thumbnail_img_name", fileName);
+			pMap.put("thumbnail_img_path", filePath);
+		}
+		pMap.put("upt_manager_seq", pMap.getRequest().getSession().getAttribute("s_manager_seq"));
+		dao.updateWork(pMap);
+		pMap.put("result", "success");
+		
+		return pMap;
+	}
+
+}

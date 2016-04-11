@@ -1,0 +1,33 @@
+package kr.co.toondra.api.coin.dao;
+
+import java.util.HashMap;
+import java.util.List;
+
+import kr.co.toondra.base.dao.BaseDao;
+
+import org.springframework.stereotype.Repository;
+
+@Repository("apiCoinDao")
+public class CoinDao extends BaseDao {
+	
+	public String getMemberSeq(String loginKey) {
+		return selectOne("API.Coin.getMemberSeq", loginKey);
+	}
+	
+	public int getCoinMember(HashMap<String, Object> param) {
+		return selectOne("API.Coin.getCoinMember", param);
+	}
+
+	public int getCoinHistoryTotalCnt(HashMap<String, Object> param) {
+		return selectOne("API.Coin.getCoinHistoryTotalCnt", param);
+	}
+	
+	public List<HashMap<String, Object>> getCoinProduct(HashMap<String, Object> param) {
+		return selectList("API.Coin.getCoinProduct", param);
+	}
+	
+	public List<HashMap<String, Object>> getCoinPurchaseHistory(HashMap<String, Object> param) {
+		return selectList("API.Coin.getCoinPurchaseHistory", param);
+	}
+	
+}

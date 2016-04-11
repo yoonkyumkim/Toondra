@@ -1,0 +1,145 @@
+<%@ page language="java" contentType="text/html; charset=EUC-KR"
+    pageEncoding="EUC-KR"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" >
+<style type="text/css">
+tbody {
+    display: block;
+    height: 120px;
+    overflow: auto;
+    float: center;
+    width: 400px;
+}
+</style>
+<meta http-equiv="Content-Type" content="text/html; charset=EUC-KR">
+<title>Insert title here</title>
+<script src="${pageContext.request.contextPath}/resources/js/jquery-1.11.2.min.js"></script>
+<script src="${pageContext.request.contextPath }/resources/js/jquery.form.js" ></script>
+<script type="text/javascript">
+function search_post(){
+	if($("#zip").val() == ''){
+		alert("주소를 입력하세요");
+		return;
+	}
+	$("#postForm").ajaxForm({
+		type : "GET"
+		,async : "true"
+		,url : "${pageContext.request.contextPath}/admin/getPost"
+		,dataType : "json"
+		,cache : false
+		,data : $("#postForm").serialize()
+		,success : function(result) {
+			$("#postForm").ajaxFormUnbind();
+			$("#address").children().remove();
+			if(result.resp_code == "200"){
+				for(var i = 0 ; i < result.data.length; i++) {
+					var contents = "";
+					var address = result.data[i].address;
+					var postcd = result.data[i].postcd;
+					contents += "<tr>"
+					contents += "<td width=\"90px\" align=\"center\"><div>"+ postcd +"</div></td>"
+					contents += "<td width=\"310px\" align=\"center\"><div onclick=\"javascript:selectPost('" + address + ","+ postcd + "')\">"+ address +"</div></td>"
+					contents += "</tr>"
+					$("#address").append(contents);
+				}
+			} else {
+				contents += "<tr>"
+				contents += "<td><div>검색 결과가 없습니다.</div></td>"
+				contents += "</tr>"
+				$("#address").append(contents);
+			}
+			
+		}
+	});
+	$("#postForm").submit();
+	
+}
+function selectPost(address) {
+	var strArray = address.split(",");
+	$("#post_address").html(address);
+	$("#zip_code").val(strArray[1]);
+	$("#addr").val(strArray[0]);
+	var search = "";
+	search += "<div class=\"form-group\">"
+	search += "<div>상세주소 : <input type=\"text\" name=\"detail_addr\" id=\"detail_addr\">"
+	search += "<button class=\"btn btn-default btn-sm\" onclick=\"javascript:write_ok()\">확인</button></div>"
+	search += "</div>"
+	$("#details").html(search);
+	
+}
+function write_ok() {
+	window.opener.document.getElementById("zip_code"+$("#addr_cnt").val()).value = $("#zip_code").val();
+	window.opener.document.getElementById("addr"+$("#addr_cnt").val()).value = $("#addr").val();
+	window.opener.document.getElementById("detail_addr"+$("#addr_cnt").val()).value = $("#detail_addr").val();
+	window.close();
+}
+function search_target(target){
+	$("#target").val(target);
+		var contents = ""
+	if(target == 'post'){
+		contents += "<div class=\"form-group\">동이름 <input type=\"text\" size=\"10\" name=\"zip\" id=\"zip\"> 동(읍/명) "
+		contents += "<button class=\"btn btn-default btn-sm\"  onclick=\"search_post()\">검색</button>"
+		contents += "</div>"
+	}
+	if(target == 'postRoad') {
+		contents += "<div class=\"form-group\">도로명<input type=\"text\" size=\"20\" name=\"zip\" id=\"zip\"> "
+		contents += "<button class=\"btn btn-default btn-sm\"  onclick=\"search_post()\">검색</button>"
+		contents += "</div>"
+	}
+	$("#search").html(contents);
+	$("#target_search").html(target);
+	
+}
+
+</script>
+</head>
+<body bgcolor="#DADADA">
+<div align="center"><strong>우편번호 찾기</strong></div>
+<form id="postForm">
+<input type="hidden" name="target" id="target" value="post" >
+<input type="hidden" id="addr_cnt" value="${addr_cnt }">
+<input type="hidden" name="zip_code" id="zip_code" >
+<input type="hidden" name="addr" id="addr" >
+<div class="form-horizontal" align="center">
+		<div class="form-group">
+			<div class="col-xs-12 col-sm-9 form-text board-context" align="center">
+				<p>
+				
+					<button type="button" class="btn btn-primary" onclick="search_target('post')" >&nbsp지번주소&nbsp</button>
+					<button type="button" class="btn btn-primary" onclick="search_target('postRoad')">도로명주소</button>
+				</p>
+			</div>
+		</div>
+		<div id="search">
+			<div class="form-group">동이름 <input type="text" size="10" name="zip" id="zip"> 동(읍/명)
+				<button class="btn btn-default btn-sm"  onclick="search_post()">검색</button>
+			</div>
+		</div>
+		<div>
+			<div class="form-group"><span>검색 결과 중 해당 주소를 클릭하시면 자동 입력됩니다.</span>
+			</div>
+		</div>
+</div>
+<hr>
+<table width="400px">
+	<thead >
+		<tr>
+			<td width="90px" align="center">우편번호</td>
+			<td width="310" align="center">주소</td>
+		</tr>
+	</thead>
+</table>
+<table class="table table-hover" align="center" width="400px">
+	<tbody id="address" >
+	</tbody>
+</table>
+<div class="form-group" id="post_address"  align="center"></div>
+<div class="form-horizontal" id="details"  align="center">
+</div>
+</form>
+
+</body>
+</html>

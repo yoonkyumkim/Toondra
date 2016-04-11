@@ -1,0 +1,89 @@
+package kr.co.toondra.web.community.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.base.controller.BaseController;
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.community.service.FAQService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping("/admin/community/faq")
+@Controller
+public class FAQController extends BaseController {
+
+	@Autowired
+	private FAQService service;
+	
+	@RequestMapping("/faqListView")
+	public String faqListView(Model model) {
+		
+		return "toondra/community/faq/faqList";
+	}
+	
+	@RequestMapping("/faqList")
+	public String faqList(HttpServletRequest req, Model model) {
+		
+		PMap pMap = new PMap(req);
+		
+		pMap.put("iDisplayStart", pMap.getInt("iDisplayStart"));
+		pMap.put("iDisplayLength", pMap.getInt("iDisplayLength"));
+		
+		model.addAllAttributes(service.getFAQList(pMap));
+		
+		return JSON_VIEW;
+	}
+
+	@RequestMapping("/faqDetail")
+	public String faqDetail(HttpServletRequest req, Model model) {
+		
+		model.addAllAttributes(service.getFAQ(new PMap(req)));
+		
+		return "toondra/community/faq/faqDetail";
+	}
+	
+	@RequestMapping("/insertFAQView")
+	public String insertFAQView(HttpServletRequest req, Model model) throws Exception {
+		
+		return "toondra/community/faq/faq";
+	}
+	
+	@RequestMapping("/insertFAQ")
+	public String insertFAQ(HttpServletRequest req, Model model) throws Exception {
+
+		service.insertFAQ(new PMap(req));
+		model.addAttribute("result", true);
+		
+		return JSON_VIEW;
+	}
+	
+	@RequestMapping("/updateFAQ")
+	public String updateFAQ(HttpServletRequest req, Model model) throws Exception {
+		
+		service.updateFAQ(new PMap(req));
+		model.addAttribute("result", true);
+		
+		return JSON_VIEW;
+	}
+	
+	@RequestMapping("/deleteFAQ")
+	public String deleteFAQ(HttpServletRequest req, Model model) throws Exception {
+		
+		service.deleteFAQ(new PMap(req));
+		model.addAttribute("result", true);
+		
+		return JSON_VIEW;
+	}
+	
+	@RequestMapping("/updateFAQPost")
+	public String updateFAQPost(HttpServletRequest req, Model model) throws Exception {
+		
+		service.updateFAQPost(new PMap(req));
+		model.addAttribute("result", true);
+		
+		return JSON_VIEW;
+	}
+}

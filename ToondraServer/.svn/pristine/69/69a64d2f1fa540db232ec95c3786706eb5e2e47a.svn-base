@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="Image">
+    <select id="getThumbnail" parameterType="hashmap" resultType="hashmap">
+		SELECT thumbnail_img_name
+		FROM tb_work
+		WHERE work_seq = #{work_seq}
+    </select>
+    
+    <select id="getContentThumbnail" parameterType="hashmap" resultType="hashmap">
+        SELECT thumbnail_img_name
+        	,work_seq
+		FROM tb_content
+		WHERE content_seq = #{content_seq};
+    </select>
+    
+</mapper>

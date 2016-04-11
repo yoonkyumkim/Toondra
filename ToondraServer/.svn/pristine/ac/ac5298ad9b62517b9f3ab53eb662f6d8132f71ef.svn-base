@@ -1,0 +1,396 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+ <% response.setContentType("text/html; charset=utf-8"); %>
+<!DOCTYPE html>
+<html>
+<head>
+<title>WorkList</title>
+
+<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/jquery-ui.min.css" >
+
+<script type="text/javascript" src="${pageContext.request.contextPath}/resources/js/jquery-ui.min.js"></script>
+
+<script type="text/javascript">
+	$(function(){
+		tableInit();
+		
+	 	//date picker
+		$("#startRegDate").datepicker({
+			showOn: "both", 
+			buttonText: '<i class="fa fa-calendar cal-btn-ahope"></i>'
+		});
+		$("#endRegDate").datepicker({
+			showOn: "both", 
+			buttonText: '<i class="fa fa-calendar cal-btn-ahope"></i>'
+		});
+		$("#startPostDate").datepicker({
+			showOn: "both", 
+			buttonText: '<i class="fa fa-calendar cal-btn-ahope"></i>'
+		});
+		$("#endPostDate").datepicker({
+			showOn: "both", 
+			buttonText: '<i class="fa fa-calendar cal-btn-ahope"></i>'
+		});
+		
+		$('#search_btn').click(function(){
+			bindTable();
+		});
+	
+		$('#check_all').change(function(){
+			$('input:checkbox[name="work_check"]').prop('checked', this.checked);
+		});
+		
+		$('#service_y_btn').click(function(){
+			updateWorkPost('Y');
+		});
+		
+		$('#service_n_btn').click(function(){
+			updateWorkPost('N');
+		});
+		
+		$('#delete_btn').click(function(){
+			deleteWork();
+		});
+		
+		$('#insert_btn').click(function(){
+			location.href = '${pageContext.request.contextPath}/admin/work/insertWorkView';
+		}); 
+		
+	});
+	
+	//게시 변경 이벤트
+	function updateWorkPost(serviceYn) {
+		
+		var url = '${pageContext.request.contextPath}/admin/work/updateWorkService';
+		var workSeqStr = "";
+		
+		var count = 0;
+		$('input:checkbox[name="work_check"]:checked').each(function(idx){
+			if(idx > 0) {
+				workSeqStr += "|"
+			}
+			++count;
+			workSeqStr += $(this).val();
+		});
+		
+		if(count == 0) {
+			cAlert("작품을 선택해 주세요.");
+			return false;
+		} else {
+			var msg = "";
+			if(serviceYn == 'Y') msg = "작품 서비스를 시작합니다.";
+			else msg = "작품 서비스를 중지합니다.";
+			
+			cConfirm(count+msg, function(){
+				var data = 'service_state='+serviceYn+'&workSeqStr='+workSeqStr;
+				ajaxP(url, data, function (data) {
+					if(data.result == false) {
+						if(data.msg != '') {
+							cAlert(data.msg);
+						} else {
+							cAlert("서비스 상태 변경에 실패하였습니다.");
+						}
+					} else {
+						cAlert("서비스 상태를 변경하였습니다.", function(){
+							bindTable();
+							$('#check_all').prop('checked', false);
+						});
+					}
+				});
+			});
+		}//if count
+		
+	}
+	
+	//게시물 삭제 이벤트
+	function deleteWork() {
+		
+		var url = '${pageContext.request.contextPath}/admin/work/deleteWork';
+		var workSeqStr = "";
+		$('input:checkbox[name="work_check"]:checked').each(function(idx){
+			if(idx > 0) {
+				workSeqStr += "|"
+			}
+			workSeqStr += $(this).val();
+		});
+		
+		if(workSeqStr == "") {
+			cAlert("작품을 선택해 주세요.");
+			return false;
+		}
+		
+		var data = 'workSeqStr='+workSeqStr;
+		ajaxP(url, data, function (data) {
+			if(data.result == false) {
+				if(data.msg != '') {
+					cAlert(data.msg);
+				} else {
+					cAlert("작품 삭제에 실패하였습니다.");
+				}
+			} else {
+				cAlert("작품을 삭제하였습니다.", function() {
+					bindTable();
+					$('#check_all').prop('checked', false);
+				});
+			}
+		});
+	}
+	
+	//목록 테이블 이벤트
+	var oTable;
+	function tableInit() {
+		oTable = $("#work_list").dataTable({
+			"aoColumnDefs": [
+			                 	{
+				                	"sDefaultContent": "",
+				                	"aTargets": [ "_all" ]
+								}
+			               ],
+			"bLengthChange": true,
+   			"bFilter":false,
+   			"sPaginationType": "bootstrap",
+   			"order": [],
+   			"bLengthChange" : false,
+   			"bProcessing": true,
+   			"oLanguage": {
+				"sInfo" : "",
+				"sInfoEmpty" : ""
+			},
+   			"bServerSide": true,
+			"aoColumns": [
+					{"bSortable": false, "sClass": "center"},
+					{"bSortable": false, "sClass": "center"},
+					{ "mDataProp": "work_name", "bSortable": false, "sClass": "center" },
+					{ "mDataProp": "author_name", "bSortable": false, "sClass": "center" },
+					{ "mDataProp": "genre_name", "bSortable": false, "sClass": "center" },
+					{ "mDataProp": "day", "bSortable": false, "sClass": "center" },
+					{ "mDataProp": "fin_yn", "bSortable": false, "sClass": "center" },
+					{ "mDataProp": "reg_date", "bSortable": false, "sClass": "center" },
+					{ "mDataProp": "service_state", "bSortable": false, "sClass": "center" }
+			],
+			"sAjaxSource": "${pageContext.request.contextPath}/admin/work/workList" ,
+			"sServerMethod": "GET",
+			"fnServerParams": function ( aoData ) {
+				aoData.push( { "name":"startRegDate", "value":$("#startRegDate").val()} );
+				aoData.push( { "name":"endRegDate", "value":$("#endRegDate").val()} );
+				aoData.push( { "name":"day", "value":$("#day").val()} );
+				aoData.push( { "name":"fin_yn", "value":$("#fin_yn").val()} );
+				aoData.push( { "name":"genre_seq", "value":$("#genre_seq").val()} );
+				aoData.push( { "name":"service_state", "value":$("#service_state").val()} );
+				aoData.push( { "name":"gubun", "value":$("#gubun").val()} );
+				aoData.push( { "name":"searchParam", "value":$("#searchParam").val()} );
+			},
+			"fnDrawCallback": function( oSettings ) {
+			},
+			"fnCreatedRow": function (nRow, aData, iDataIndex) {
+				var totalCnt = oTable.fnSettings().fnRecordsTotal();
+				var startIndex = oTable.fnSettings()._iDisplayStart;
+				$(nRow).find('td').eq(1).html(totalCnt-(startIndex+iDataIndex));
+				$(nRow).find('td').eq(0).html('<input type="checkbox" name="work_check" value="'+aData.work_seq+'">');
+				
+				var genreArray = aData.genre_name.split(",");
+				var genre = "";
+				for(var i = 0 ; i < genreArray.length; i++) {
+					genre += genreArray[i];
+					if(i != genreArray.length-1){
+						genre += "/";
+					}
+				}
+				$(nRow).find('td').eq(4).html(genre);
+				
+				var days = aData.day;
+				var dayArray = days.split(",");
+				var day = "";
+				for(var i = 0 ; i<dayArray.length; i++){
+					if(dayArray[i] == '1' ){
+						day += "월요일"
+					}
+					if(dayArray[i] == '2' ){
+						day += "화요일"
+					}
+					if(dayArray[i] == '3' ){
+						day += "수요일"
+					}
+					if(dayArray[i] == '4' ){
+						day += "목요일"
+					}
+					if(dayArray[i] == '5' ){
+						day += "금요일"
+					}
+					if(dayArray[i] == '6' ){
+						day += "토요일"
+					}
+					if(dayArray[i] == '7' ){
+						day += "일요일"
+					}
+					if(i != dayArray.length-1){
+						day += "/";
+					}
+				}
+				$(nRow).find('td').eq(5).html(day);
+				
+				if(aData.fin_yn == 'Y' ) {
+					$(nRow).find('td').eq(6).html('완료');
+				}
+				if(aData.fin_yn == 'N' ) {
+					$(nRow).find('td').eq(6).html('연재중');
+				}
+				if(aData.service_state == 'Y' ) {
+					$(nRow).find('td').eq(8).html('서비스중');
+				}
+				if(aData.service_state == 'N' ) {
+					$(nRow).find('td').eq(8).html('서비스중지');
+				}
+					
+				$(nRow).find('td:not(:first-child)').unbind("click").bind("click", function(){
+					$('#work_seq').val(aData.work_seq);
+					$('#frm').attr('action', '${pageContext.request.contextPath}/admin/work/workDetail').submit();
+				});
+			}
+		});
+	}
+	
+	function bindTable() {
+		oTable.fnDestroy();
+		tableInit();
+		oTable.fnSettings()._iDisplayStart = 0;
+	}
+</script>
+
+
+</head>
+<body>
+
+
+<form id="frm" name="frm" method="post" >
+	
+	<input type="hidden" id="work_seq" name="work_seq" value="">
+	
+	<!-- Title -->
+	<div class="row">
+		<div class="col-lg-12">
+			<h3 class="page-header page-header-ahope">작품관리</h3>
+			<h5 class="page-header page-header-desc-ahope">작품을 관리합니다.</h5>
+		</div>
+	</div>
+
+	<!-- Main -->
+	<div class="row">
+		<div class="col-lg-12">
+		
+			<!-- Searchbox -->
+			<div id="filter-panel" class="filter-panel collapse in" style="height: auto;">
+				<div class="panel panel-default">
+					<div class="panel-body">
+						
+						<div class="navbar-form" role="search">
+							<label>등록일 : </label>
+							<div class="form-group search-cm-ahope">
+								<input type="text" id="startRegDate" name="startRegDate" class="form-control input-ahope-wd-sm">
+								-
+								<input type="text" id="endRegDate" name="endRegDate" class="form-control input-ahope-wd-sm">
+							</div>
+							
+							<label>요일/완결 : </label>
+							<div class="form-group search-cm-ahope">
+								<select id="day" name="day" class="form-control">
+									<option value="" selected="selected">전체</option>
+									<option value="1">월요일</option>
+									<option value="2">화요일</option>
+									<option value="3">수요일</option>
+									<option value="4">목요일</option>
+									<option value="5">금요일</option>
+									<option value="6">토요일</option>
+									<option value="7">일요일</option>
+								</select>
+								
+								<select id="fin_yn" name="fin_yn" class="form-control">
+									<option value="" selected="selected">전체</option>
+									<option value="Y">완결</option>
+									<option value="N">연재중</option>
+								</select>
+							</div>
+						</div>
+							
+						<div class="navbar-form navbar-left" role="search">
+							<label>장르 : </label>
+							<div class="form-group search-cm-ahope">
+								<select class="form-control" id="genre_seq" name="genre_seq" >
+										<option value="" selected="selected">전체</option>
+									<c:forEach var="list" items="${genreList }">
+										<option value="${list.genre_seq }" >${list.genre_name }</option>
+									</c:forEach>
+								</select>
+							</div>
+							
+							<label>서비스 상태 : </label>
+							<div class="form-group search-cm-ahope">
+								<select id="service_state" name="service_state" class="form-control">
+									<option value="" selected="selected">전체</option>
+									<option value="Y">서비스중</option>
+									<option value="N">서비스중지</option>
+								</select>
+							</div>
+						</div>
+							
+						<div class="navbar-form navbar-left" role="search">
+							<label>키워드 : </label>
+							<div class="form-group search-cm-ahope">
+								<select id="gubun" name="gubun" class="form-control">
+									<option value="work_name">작품명</option>
+									<option value="author_name">작가명</option>
+								</select>
+							</div>
+							<label>    </label>
+							<div class="form-group search-cm-ahope">
+								<input type="text" id="searchParam" name="searchParam" class="form-control">
+							</div>
+							
+						</div>	
+						<div class="navbar-form search-btn-ahope">
+							<button class="btn btn-ahope" type="button" id="search_btn" >
+								<i class="fa fa-search"></i> 검색
+							</button>
+						</div>
+
+					</div>
+				</div>
+			</div>		
+		
+			<div>
+				<div class="btn-left">
+					<button type="button" class="btn btn-info" id="service_y_btn">서비스</button>
+					<button type="button" class="btn btn-primary" id="service_n_btn">서비스중지</button>
+				</div>
+				<div class="btn-right">
+					<button type="button" class="btn btn-default" id="insert_btn">등록</button>
+					<button type="button" class="btn btn-ahope" id="delete_btn">삭제</button>
+				</div>
+			</div>
+			
+			<!-- list table -->
+			<table id="work_list" class="table table-link-ahope">
+				<caption></caption>
+	     			<!-- list table header -->
+				<thead id="sms-list-title" style="height:1px;">
+					<tr>
+						<th scope="col" style="width:5%"><input type="checkbox" id="check_all"></th>
+						<th scope="col" style="width:10%"><strong>No</strong></th>
+						<th scope="col" ><strong>작품명</strong></th>
+						<th scope="col" style="width:10%"><strong>작가명</strong></th>
+						<th scope="col" style="width:10%"><strong>장르</strong></th>
+						<th scope="col" style="width:10%"><strong>요일</strong></th>
+						<th scope="col" style="width:10%"><strong>완료/미완료</strong></th>
+						<th scope="col" style="width:10%"><strong>작품 등록일</strong></th>
+						<th scope="col" style="width:10%"><strong>서비스 상태</strong></th>
+					</tr>
+				</thead>
+			</table>
+			
+		</div>
+	</div>
+	
+</form>
+</body>
+</html>

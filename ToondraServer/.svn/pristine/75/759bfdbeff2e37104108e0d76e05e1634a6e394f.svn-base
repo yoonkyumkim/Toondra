@@ -1,0 +1,12 @@
+#mail
+mail.host =smtp.gmail.com
+#mail.host =localhost
+mail.protocol=smpts
+mail.smtp.socket=javax.net.ssl.SSLSocketFactory
+mail.smtp.port=465
+mail.auth.email=ahope.craft@gmail.com
+mail.auth.passwd=dkghq99!!
+mail.from.email=help@appshields.com
+mail.from.name=Toondra
+
+

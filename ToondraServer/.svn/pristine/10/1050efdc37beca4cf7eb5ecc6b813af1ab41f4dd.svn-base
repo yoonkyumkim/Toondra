@@ -1,0 +1,75 @@
+package kr.co.toondra.base.controller;
+
+import javax.servlet.http.HttpServletRequest;
+
+import kr.co.toondra.common.exception.LogicException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+public class BaseController {
+	
+	protected Logger logger = LoggerFactory.getLogger(this.getClass());
+
+	@ExceptionHandler(Exception.class)
+	public @ResponseBody ModelAndView exceptionHandler(HttpServletRequest request, Exception e) {
+		//TODO
+		e.printStackTrace();
+		
+		String errCode = "900";
+		String errName = e.getClass().getName();
+		String errMsg = "";
+		
+		if(errName.equals("kr.co.toondra.common.exception.LogicException")) {
+			errCode = ((LogicException)e).getCode();
+			errMsg = ((LogicException)e).getMessage();
+		}
+		if(errName.equals("org.springframework.web.bind.MissingServletRequestParameterException")) {
+			errCode = "306";
+		} else if (errName.equals("java.lang.NullPointerException")) {
+			logger.error("can not found data");
+			errCode = "400";
+		} else if (errName.equals("org.springframework.beans.TypeMismatchException")) {
+			logger.error("type miss match");
+			errCode = "307";
+		} else if (errName.equals("java.lang.NumberFormatException")) {
+			logger.error("cast error String -> Integer");
+			errCode = "307";
+		} else if (errName.equals("java.lang.IOException")) {
+			logger.error("file error");
+			errCode = "500";
+		} else if (errName.equals("org.springframework.web.HttpMediaTypeNotSupportedException")) {
+			logger.error("not surppoted Content-Type");
+			errCode = "311";
+		} else if(errName.equals("org.springframework.jdbc.BadSqlGrammarException")) {
+			logger.error("query error");
+			errCode = "500";
+		} else if(errName.equals("org.springframework.web.client.ResourceAccessException")) {
+			logger.error("B/O return data type is not aplication/json");
+			errCode = "312";
+		} else if(errName.equals("java.lang.RuntimeException.RuntimeException")) {
+			logger.error("Runtime err");
+			errCode = "217";
+		}
+		
+		//TODO 에러 메세지 처리는?
+		ModelAndView mnv = new ModelAndView();
+		
+		if(request.getRequestURI().toLowerCase().indexOf("/ajax") > 0) {
+			mnv.setViewName("jacksonView");
+			mnv.addObject("result", false);
+			mnv.addObject("errCode", errCode);
+			mnv.addObject("msg", errMsg);
+		} else {
+			//TODO 공통 에러 페이지 
+			mnv.setViewName("");
+		}
+		
+		return mnv;
+		
+	}
+	
+}

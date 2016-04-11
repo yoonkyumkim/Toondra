@@ -1,0 +1,33 @@
+package kr.co.toondra.web.stats.service;
+
+import java.util.HashMap;
+import java.util.List;
+
+import kr.co.toondra.common.collection.PMap;
+import kr.co.toondra.web.stats.dao.StatsDao;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class StatsService {
+	
+	@Autowired
+	StatsDao dao = new StatsDao();
+
+	public HashMap<String, Object> statsList(PMap pMap) {
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		
+		int totalcnt = dao.getStatsTotalCnt(pMap);
+		List<HashMap<String, Object>> statsList = dao.getStatsList(pMap);
+		
+		result.put("iTotalRecords", totalcnt);
+		result.put("iTotalDisplayRecords", totalcnt);		
+		result.put("aaData", statsList);
+		
+		
+		return result;
+	}
+	
+
+}
